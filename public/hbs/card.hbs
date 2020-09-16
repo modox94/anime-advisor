@@ -9,7 +9,9 @@
       <div class="d-flex justify-content-between align-items-center">
         <div class="btn-group">
 
-          <div type="button" class="btn btn-sm btn-outline-secondary add">Add</div>
+          <div type="button"
+            class="{{#if this.alreadyAdd}}btn btn-sm btn-success add{{else}}btn btn-sm btn-outline-secondary add{{/if}}">
+            Add</div>
           <div type="button" class="btn btn-sm btn-outline-secondary">Edit</div>
           <a href="{{this.url}}" class="btn btn-sm btn-outline-secondary" role="button" aria-pressed="true">MAL</a>
 

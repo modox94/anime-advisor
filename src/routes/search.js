@@ -5,12 +5,14 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { term } = req.body;
-  const regExpIndex = /^https:\/\/myanimelist\.net\/anime\/(\d+)\/\w+/gi;
+  const regExpIndex = /^https:\/\/myanimelist\.net\/anime\/(\d+)\/\S+/gi;
   const regExpImg = /\/r\/100x140|\?s=\w+/gi;
 
   let arrayOfTitles = await malScraper.search.search('anime', {
     term,
   });
+
+  arrayOfTitles = arrayOfTitles.slice(0, 8);
 
   arrayOfTitles = arrayOfTitles.map((title) => {
     title.id = title.url.replace(regExpIndex, '$1');
