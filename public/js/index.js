@@ -1,14 +1,17 @@
 let searchForm = document.getElementById('searchForm');
 let searchInput = document.getElementById('searchInput');
 let clearForm = document.getElementById('clearForm');
+let searchByRec = document.getElementById('searchByRec');
 
-let reusltContainer = document.getElementById('result');
+let resultContainer = document.getElementById('result');
 let recommendContainer = document.getElementById('recommend');
 
 let addButtons;
 
 searchForm.addEventListener('submit', callbackSearch);
 clearForm.addEventListener('click', callbackClear);
+searchByRec.addEventListener('click', callbackSearchByRec);
+start();
 
 async function callbackSearch(event) {
   event.preventDefault();
@@ -29,7 +32,7 @@ async function callbackSearch(event) {
     }
   }
 
-  reusltContainer.innerHTML = await renderHbs(
+  resultContainer.innerHTML = await renderHbs(
     { arrayOfTitles },
     '/hbs/card.hbs'
   );
@@ -92,7 +95,7 @@ async function renderHbs(data, url) {
 function makeRecButton(id, title) {
   let currentButton = document.createElement('button');
   currentButton.dataset.id = id;
-  currentButton.className = 'btn btn-outline-warning';
+  currentButton.className = 'btn btn-outline-warning mx-1 my-1';
   currentButton.innerText = title;
 
   recommendContainer.appendChild(currentButton);
@@ -101,11 +104,50 @@ function makeRecButton(id, title) {
 
 function callbackRecButton(event) {
   event.target.removeEventListener('click', callbackRecButton);
-  let currentCard = document.getElementById(event.target.dataset.id);
-  currentCard.getElementsByClassName('add')[0].className =
-    'btn btn-sm btn-outline-secondary add';
   localStorage.removeItem(event.target.dataset.id);
   event.target.remove();
+  let currentCard = document.getElementById(event.target.dataset.id);
+  if (currentCard) {
+    currentCard.getElementsByClassName('add')[0].className =
+      'btn btn-sm btn-outline-secondary add';
+  }
+}
+
+function start() {
+  let arrayOfId = Object.keys(localStorage);
+
+  for (let id of arrayOfId) {
+    if (id !== 'searchResults') {
+      let card = JSON.parse(localStorage.getItem(id));
+      makeRecButton(card.id, card.title);
+    }
+  }
+}
+
+async function callbackSearchByRec() {
+  let arrayOfId = Object.keys(localStorage);
+  // let delId = arrayOfId.indexOf('searchResults');
+  // if (delId) {
+  //   arrayOfId.splice(delId, 1);
+  // }
+  let arrayOfRecomends = [];
+  for (let id of arrayOfId) {
+    if (id !== 'searchResults') {
+      arrayOfRecomends.push(JSON.parse(localStorage.getItem(id)));
+    }
+  }
+
+  let response = await fetch('/recommend', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ arrayOfRecomends }), //второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
+  });
+
+  let arrayOfTitles = JSON.parse(await response.json());
+  console.log('arrayOfId', arrayOfId);
+  console.log('arrayOfTitles', arrayOfTitles);
 }
 
 /*

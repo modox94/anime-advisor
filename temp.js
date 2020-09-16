@@ -1,3 +1,4 @@
+// пример результата поиска
 // endDate: '09-20-11';
 // members: '263,708';
 // nbEps: '12';
@@ -10,6 +11,17 @@
 // type: 'TV';
 // url: 'https://myanimelist.net/anime/10495/Yuru_Yuri';
 // video: 'https://myanimelist.net/anime/10495/Yuru_Yuri/video';
+
+/*
+пример рекомендации
+{
+    pictureImage: 'https://cdn.myanimelist.net/r/50x70/images/anime/4/25196.jpg?s=f6d0dad0063c737fdca16c04e6e51cd9',
+    animeLink: 'https://myanimelist.net/anime/365/Fake',
+    anime: 'Fake',
+    mainRecommendation: 'Fake and Zetsuai both deal with the problems that arise from a romantic relationship between two men. Fake is light hearted with a thriller related plot while Zetsuai is much visceral and dark, fans of one should be interested in the other, though.',
+    author: 'Nocturnal'
+  },
+*/
 
 let url = 'https://myanimelist.net/anime/10495/Yuru_Yuri';
 let reg = /^https:\/\/myanimelist\.net\/anime\/(\d+)\/\w+/gim;

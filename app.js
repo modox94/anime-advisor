@@ -12,6 +12,7 @@ const signupRouter = require('./src/routes/signup.js');
 const signinRouter = require('./src/routes/signin.js');
 const signoutRouter = require('./src/routes/signout.js');
 const searchRouter = require('./src/routes/search.js');
+const recommendRouter = require('./src/routes/recommend.js');
 
 const FileStore = sessionFileStore(session);
 require('dotenv').config();
@@ -50,6 +51,7 @@ app.use('/signup', signupRouter);
 app.use('/signin', signinRouter);
 app.use('/signout', signoutRouter);
 app.use('/search', searchRouter);
+app.use('/recommend', recommendRouter);
 
 app.listen(process.env.PORT || 3000, (err) => {
   if (err) throw err;
