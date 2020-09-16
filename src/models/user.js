@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  firstName: String,
-  lastName: String,
-  birthDate: String,
-  phone: String,
-  email: String,
   username: {
     type: String,
     required: true,
@@ -17,10 +12,9 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 4,
   },
-  deals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Deal', default: [] }],
-  cars: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car', default: [] }],
-  admin: { type: Boolean, default: false },
-  registrationDate: Date,
+  search: { type: Array, default: [] }, // тут хранятся id сериалов/фильмов MAL
+  recommendations: { type: Object, default: {} }, // тут хранятся id сериалов/фильмов MAL
+  expections: { type: Array, default: [] }, // тут хранятся id сериалов/фильмов MAL
 });
 
 module.exports = mongoose.model('User', userSchema);

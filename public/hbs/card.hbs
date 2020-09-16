@@ -1,0 +1,21 @@
+{{#each arrayOfTitles}}
+<div id="{{this.id}}" class="col-md-3">
+  <div class="card mb-3 shadow-sm">
+    <img class="img-thumbnail card-img-top" src="{{this.img}}" alt="{{this.title}}">
+    </img>
+    <div class="card-body">
+      <h5>{{this.title}}</h5>
+      <p class="card-text">{{this.shortDescription}}</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="btn-group">
+
+          <div type="button" class="btn btn-sm btn-outline-secondary add">Add</div>
+          <div type="button" class="btn btn-sm btn-outline-secondary">Edit</div>
+          <a href="{{this.url}}" class="btn btn-sm btn-outline-secondary" role="button" aria-pressed="true">MAL</a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{/each}}

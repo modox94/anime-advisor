@@ -3,7 +3,12 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  res.render('index');
+  if (req.session.user?.username) {
+    // вытягивание из базы данных массивов
+    return res.render('index', { index: true });
+  }
+
+  res.render('index', { index: true });
 });
 
 module.exports = router;
