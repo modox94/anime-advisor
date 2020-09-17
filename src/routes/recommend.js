@@ -1,7 +1,10 @@
 const express = require('express');
 // const malScraper = require('mal-scraper');
 const jikanjs = require('jikanjs');
+const RutrackerApi = require('rutracker-api');
+require('dotenv').config();
 
+const rutracker = new RutrackerApi();
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -58,6 +61,31 @@ router.post('/', async (req, res) => {
   // }
 
   // res.json(JSON.stringify(arrayOfTitles));
+});
+
+router.post('/synopsis', async (req, res) => {
+  const { id } = req.body;
+  console.log(id);
+
+  let dataOfTitle = await jikanjs.loadAnime(id);
+
+  // rutracker
+
+  console.log(process.env.RUTRACKER_LOGIN, process.env.RUTRACKER_PASSWORD);
+  await rutracker.login({
+    username: process.env.RUTRACKER_LOGIN,
+    password: process.env.RUTRACKER_PASSWORD,
+  });
+
+  let rutrackerResult = await rutracker.search({
+    query: dataOfTitle.title,
+    sort: 'size',
+  });
+
+  console.log(rutrackerResult);
+  // rutracker
+
+  res.json(JSON.stringify(dataOfTitle));
 });
 
 module.exports = router;

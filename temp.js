@@ -158,19 +158,47 @@ console.log(test2);
 
 // const Jikan = require('jikan-node');
 // const mal = new Jikan();
-const jikanjs = require('jikanjs');
+// const jikanjs = require('jikanjs');
 
-let temp;
-let temp2;
-async function start() {
-  console.log('start');
-  try {
-    temp = await jikanjs.loadAnime('849');
-    temp2 = await jikanjs.search('anime', 'yuru', 10);
-  } catch (err) {
-    console.log(err.message);
-  }
-  console.log('finish', temp);
-}
-start();
+// let temp;
+// let temp2;
+// async function start() {
+//   console.log('start');
+//   try {
+//     temp = await jikanjs.loadAnime('849');
+//     temp2 = await jikanjs.search('anime', 'yuru', 10);
+//   } catch (err) {
+//     console.log(err.message);
+//   }
+//   console.log('finish', temp);
+// }
+// start();
 ///recommendation
+
+/*
+bcrypt dotenv express express-session hbs jikanjs mal-scraper mongoose path rutracker-api session-file-store
+*/
+
+const tg = require('torrent-grabber');
+require('dotenv').config();
+
+const trackersToUse = [
+  '1337x',
+  'ThePirateBay',
+  'Nnm',
+  [
+    'Rutracker',
+    {
+      login: process.env.RUTRACKER_LOGIN,
+      pass: process.env.RUTRACKER_PASSWORD,
+    },
+  ],
+];
+
+tg.activate('ThePirateBay').then((name) => {
+  console.log(`${name} is ready!`);
+
+  tg.search('the greatest showman', {
+    groupByTracker: false,
+  }).then((items) => console.log(items));
+});

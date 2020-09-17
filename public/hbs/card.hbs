@@ -1,5 +1,5 @@
 {{#each arrayOfTitles}}
-<div id="{{this.mal_id}}" class="col-md-3">
+<div id="{{this.mal_id}}" class="{{#if ../recommend}}col-md-4{{else}}col-md-3{{/if}} main-card">
   <div class="card mb-3 shadow-sm">
     <img class="img-thumbnail card-img-top" src="{{this.image_url}}" alt="{{this.title}}">
     </img>
@@ -8,13 +8,13 @@
       <p class="card-text">{{this.synopsis}}</p>
       <div class="d-flex justify-content-between align-items-center">
         <div class="btn-group">
-
           <div type="button"
             class="{{#if this.alreadyAdd}}btn btn-sm btn-success add{{else}}btn btn-sm btn-outline-secondary add{{/if}}">
             Add</div>
-          <div type="button" class="btn btn-sm btn-outline-secondary">Edit</div>
+          {{#unless this.synopsis}}
+          <div type="button" class="btn btn-sm btn-outline-secondary synopsis">Загрузить описание</div>
+          {{/unless}}
           <a href="{{this.url}}" class="btn btn-sm btn-outline-secondary" role="button" aria-pressed="true">MAL</a>
-
         </div>
       </div>
     </div>

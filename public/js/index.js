@@ -6,6 +6,7 @@ let searchByRec = document.getElementById('searchByRec');
 let resultContainer = document.getElementById('result');
 let recommendContainer = document.getElementById('recommend');
 
+let spinner = document.getElementById('spinner');
 let addButtons;
 
 searchForm.addEventListener('submit', callbackSearch);
@@ -15,6 +16,7 @@ start();
 
 async function callbackSearch(event) {
   event.preventDefault();
+  spinner.style.display = 'block';
 
   let response = await fetch('/search', {
     method: 'POST',
@@ -32,10 +34,10 @@ async function callbackSearch(event) {
     }
   }
 
-  resultContainer.innerHTML = await renderHbs(
-    { arrayOfTitles },
-    '/hbs/card.hbs'
-  );
+  let html = await renderHbs({ arrayOfTitles }, '/hbs/card.hbs');
+
+  spinner.style.display = 'none';
+  resultContainer.innerHTML = html;
 
   let addButtons = [...document.getElementsByClassName('add')];
   addButtons.forEach((addButton) => {
@@ -55,7 +57,7 @@ function callbackClear(event) {
 }
 
 function callbackAdd(event) {
-  let card = event.target.closest('.col-md-3');
+  let card = event.target.closest('.main-card');
 
   if (!localStorage.getItem(card.id)) {
     let searchResults = JSON.parse(localStorage.getItem('searchResults'));
@@ -93,7 +95,7 @@ async function renderHbs(data, url) {
 function makeRecButton(id, title) {
   let currentButton = document.createElement('button');
   currentButton.dataset.id = id;
-  currentButton.className = 'btn btn-outline-warning mx-1 my-1';
+  currentButton.className = 'btn btn-warning mx-1 my-1';
   currentButton.innerText = title;
 
   recommendContainer.appendChild(currentButton);
@@ -123,11 +125,19 @@ function start() {
 }
 
 async function callbackSearchByRec() {
+  spinner.style.display = 'block';
+
   let arrayOfId = Object.keys(localStorage);
   let delId = arrayOfId.indexOf('searchResults');
-  if (delId) {
+  if (delId !== -1) {
     arrayOfId.splice(delId, 1);
   }
+
+  if (!arrayOfId.length) {
+    spinner.style.display = 'none';
+    return;
+  }
+
   let arrayOfRecomends = [];
   for (let id of arrayOfId) {
     // if (id !== 'searchResults') {
@@ -152,7 +162,7 @@ async function callbackSearchByRec() {
   }
 
   resultContainer.innerHTML = await renderHbs(
-    { arrayOfTitles },
+    { arrayOfTitles, recommend: true },
     '/hbs/card.hbs'
   );
 
@@ -161,7 +171,34 @@ async function callbackSearchByRec() {
     addButton.addEventListener('click', callbackAdd);
   });
 
+  let synopsisButtons = [...document.getElementsByClassName('synopsis')];
+  synopsisButtons.forEach((synopsisButton) => {
+    synopsisButton.addEventListener('click', callbackSynopsis);
+  });
+
+  spinner.style.display = 'none';
   localStorage.setItem('searchResults', JSON.stringify(arrayOfTitles));
+}
+
+async function callbackSynopsis(event) {
+  let card = event.target.closest('.main-card');
+  console.log(card.id);
+
+  let response = await fetch('/recommend/synopsis', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: card.id }),
+  });
+
+  let dataOfTitle = JSON.parse(await response.json());
+
+  card.getElementsByClassName('card-text')[0].innerText = dataOfTitle.synopsis;
+
+  event.target.removeEventListener('click', callbackSynopsis);
+  event.target.remove();
+  console.log(dataOfTitle);
 }
 
 /*
