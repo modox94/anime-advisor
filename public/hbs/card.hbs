@@ -1,11 +1,11 @@
 {{#each arrayOfTitles}}
-<div id="{{this.id}}" class="col-md-3">
+<div id="{{this.mal_id}}" class="col-md-3">
   <div class="card mb-3 shadow-sm">
-    <img class="img-thumbnail card-img-top" src="{{this.img}}" alt="{{this.title}}">
+    <img class="img-thumbnail card-img-top" src="{{this.image_url}}" alt="{{this.title}}">
     </img>
     <div class="card-body">
       <h5>{{this.title}}</h5>
-      <p class="card-text">{{this.shortDescription}}</p>
+      <p class="card-text">{{this.synopsis}}</p>
       <div class="d-flex justify-content-between align-items-center">
         <div class="btn-group">
 

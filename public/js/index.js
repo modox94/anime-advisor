@@ -27,7 +27,7 @@ async function callbackSearch(event) {
   let arrayOfTitles = JSON.parse(await response.json());
 
   for (let title of arrayOfTitles) {
-    if (localStorage.getItem(title.id)) {
+    if (localStorage.getItem(title.mal_id)) {
       title.alreadyAdd = true;
     }
   }
@@ -50,31 +50,29 @@ function callbackClear(event) {
   event.preventDefault();
   searchForm.reset();
   localStorage.clear();
+  resultContainer.innerHTML = '';
+  recommendContainer.innerHTML = '';
 }
 
 function callbackAdd(event) {
   let card = event.target.closest('.col-md-3');
 
-  console.log(card.id);
-
   if (!localStorage.getItem(card.id)) {
     let searchResults = JSON.parse(localStorage.getItem('searchResults'));
     let titleData;
     for (let title of searchResults) {
-      if (card.id === title.id) {
+      if (card.id === String(title.mal_id)) {
         titleData = title;
         break;
       }
     }
-
     event.target.className = 'btn btn-sm btn-success add';
     localStorage.setItem(card.id, JSON.stringify(titleData));
-    makeRecButton(titleData.id, titleData.title);
+    makeRecButton(titleData.mal_id, titleData.title);
   } else {
     event.target.className = 'btn btn-sm btn-outline-secondary add';
     localStorage.removeItem(card.id);
     let currentButton = document.querySelector(`[data-id="${card.id}"]`);
-    console.log(currentButton);
     currentButton.removeEventListener('click', callbackRecButton);
     currentButton.remove();
   }
@@ -119,22 +117,22 @@ function start() {
   for (let id of arrayOfId) {
     if (id !== 'searchResults') {
       let card = JSON.parse(localStorage.getItem(id));
-      makeRecButton(card.id, card.title);
+      makeRecButton(card.mal_id, card.title);
     }
   }
 }
 
 async function callbackSearchByRec() {
   let arrayOfId = Object.keys(localStorage);
-  // let delId = arrayOfId.indexOf('searchResults');
-  // if (delId) {
-  //   arrayOfId.splice(delId, 1);
-  // }
+  let delId = arrayOfId.indexOf('searchResults');
+  if (delId) {
+    arrayOfId.splice(delId, 1);
+  }
   let arrayOfRecomends = [];
   for (let id of arrayOfId) {
-    if (id !== 'searchResults') {
-      arrayOfRecomends.push(JSON.parse(localStorage.getItem(id)));
-    }
+    // if (id !== 'searchResults') {
+    arrayOfRecomends.push(JSON.parse(localStorage.getItem(id)));
+    // }
   }
 
   let response = await fetch('/recommend', {
@@ -142,12 +140,28 @@ async function callbackSearchByRec() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ arrayOfRecomends }), //второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
+    body: JSON.stringify({ arrayOfId, arrayOfRecomends }), //второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
   });
 
   let arrayOfTitles = JSON.parse(await response.json());
-  console.log('arrayOfId', arrayOfId);
-  console.log('arrayOfTitles', arrayOfTitles);
+
+  for (let title of arrayOfTitles) {
+    if (localStorage.getItem(title.mal_id)) {
+      title.alreadyAdd = true;
+    }
+  }
+
+  resultContainer.innerHTML = await renderHbs(
+    { arrayOfTitles },
+    '/hbs/card.hbs'
+  );
+
+  let addButtons = [...document.getElementsByClassName('add')];
+  addButtons.forEach((addButton) => {
+    addButton.addEventListener('click', callbackAdd);
+  });
+
+  localStorage.setItem('searchResults', JSON.stringify(arrayOfTitles));
 }
 
 /*
