@@ -179,26 +179,73 @@ console.log(test2);
 bcrypt dotenv express express-session hbs jikanjs mal-scraper mongoose path rutracker-api session-file-store
 */
 
-const tg = require('torrent-grabber');
-require('dotenv').config();
+// const tg = require('torrent-grabber');
+// require('dotenv').config();
 
-const trackersToUse = [
-  '1337x',
-  'ThePirateBay',
-  'Nnm',
-  [
-    'Rutracker',
-    {
-      login: process.env.RUTRACKER_LOGIN,
-      pass: process.env.RUTRACKER_PASSWORD,
-    },
-  ],
-];
+// const trackersToUse = [
+//   '1337x',
+//   'ThePirateBay',
+//   'Nnm',
+//   [
+//     'Rutracker',
+//     {
+//       login: process.env.RUTRACKER_LOGIN,
+//       pass: process.env.RUTRACKER_PASSWORD,
+//     },
+//   ],
+// ];
 
-tg.activate('ThePirateBay').then((name) => {
-  console.log(`${name} is ready!`);
+// tg.activate('ThePirateBay').then((name) => {
+//   console.log(`${name} is ready!`);
 
-  tg.search('the greatest showman', {
-    groupByTracker: false,
-  }).then((items) => console.log(items));
-});
+//   tg.search('yuru yuri', {
+//     groupByTracker: false,
+//   }).then((items) => console.log(items));
+// });
+
+// const { si, pantsu } = require('nyaapi');
+
+// async function start(term) {
+//   let result = await pantsu.searchAll('yuru camp', {
+//     order: true,
+//     sort: '1',
+//     c: '3_5',
+//   });
+
+//   console.log(result);
+// }
+
+// start('yuru camp');
+// // 1073741824 = 1 гб
+
+/*
+anidbid: 0
+category: "3"
+comments: []
+completed: 0
+date: "2013-01-21T02:53:00Z"
+description: "<p>Video – 1920x1080 @ crf 16Audio – FLACSubs: CMS (Main)</p>↵"
+dlsite: ""
+file_list: []
+filesize: 1625404818
+filesizeGb: "1.51"
+hash: "14555E3B46CF923A4BEC50A526ED81AD6238A1D5"
+id: 395328
+languages: [""]
+last_scrape: "2020-09-18T10:24:19.237297303+01:00"
+leechers: 3
+magnet: "magnet:?xt=urn:btih:14555E3B46CF923A4BEC50A526ED81AD6238A1D5&dn=%5BAnimeNOW%5D+One+Off+%28BD+1920x1080+10-bit+x264+FLAC%29&tr=udp://tracker.uw0.xyz:6969/announce&tr=udp://tracker.coppersurfer.tk:6969&tr=udp://tracker.zer0day.to:1337/announce&tr=udp://tracker.leechers-paradise.org:6969&tr=udp://explodie.org:6969&tr=udp://tracker.opentrackr.org:1337&tr=udp://tracker.internetwarriors.net:1337/announce&tr=http://mgtracker.org:6969/announce&tr=udp://ipv6.leechers-paradise.org:6969/announce&tr=http://nyaa.tracker.wf:7777/announce&tr=http://sukebei.tracker.wf:7777/announce&tr=http://tracker.anirena.com:80/announce&tr=http://anidex.moe:6969/announce&tr=udp://tracker.uw0.xyz:6969/announce&tr=udp://tracker.coppersurfer.tk:6969&tr=udp://tracker.zer0day.to:1337/announce&tr=udp://tracker.leechers-paradise.org:6969&tr=udp://explodie.org:6969&tr=udp://tracker.opentrackr.org:1337&tr=udp://tracker.internetwarriors.net:1337/announce&tr=http://mgtracker.org:6969/announce&tr=udp://ipv6.leechers-paradise.org:6969/announce&tr=http://nyaa.tracker.wf:7777/announce&tr=http://sukebei.tracker.wf:7777/announce&tr=http://tracker.anirena.com:80/announce&tr=http://anidex.moe:6969/announce"
+name: "[AnimeNOW] One Off (BD 1920x1080 10-bit x264 FLAC)"
+seeders: 1
+status: 1
+sub_category: "5"
+tags: null
+torrent: "http://anicache.com/torrent/14555E3B46CF923A4BEC50A526ED81AD6238A1D5.torrent"
+uploader_id: 0
+uploader_name: "れんちょん"
+uploader_old: ""
+vgmdbid: 0
+videoquality: ""
+vndbid: 0
+website_link: ""
+*/

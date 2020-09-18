@@ -182,7 +182,6 @@ async function callbackSearchByRec() {
 
 async function callbackSynopsis(event) {
   let card = event.target.closest('.main-card');
-  console.log(card.id);
 
   let response = await fetch('/recommend/synopsis', {
     method: 'POST',
@@ -192,13 +191,23 @@ async function callbackSynopsis(event) {
     body: JSON.stringify({ id: card.id }),
   });
 
-  let dataOfTitle = JSON.parse(await response.json());
+  let { dataOfTitle, arrayOfTorrents } = JSON.parse(await response.json());
 
-  card.getElementsByClassName('card-text')[0].innerText = dataOfTitle.synopsis;
+  let magnetHtml = '';
+  for (let torrent of arrayOfTorrents) {
+    magnetHtml += '\n<br>';
+    magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
+  }
+  magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title.replace(
+    ' ',
+    '+'
+  )}">☠ Search more torrents... ☠</a>`;
+
+  card.getElementsByClassName('card-text')[0].innerHTML =
+    dataOfTitle.synopsis + magnetHtml;
 
   event.target.removeEventListener('click', callbackSynopsis);
   event.target.remove();
-  console.log(dataOfTitle);
 }
 
 /*
