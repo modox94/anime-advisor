@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
-const sessionFileStore = require('session-file-store');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo')(session);
 const path = require('path');
 const hbs = require('hbs');
 const dbConnect = require('./dbConnect.js');
@@ -14,7 +15,6 @@ const signoutRouter = require('./src/routes/signout.js');
 const searchRouter = require('./src/routes/search.js');
 const recommendRouter = require('./src/routes/recommend.js');
 
-const FileStore = sessionFileStore(session);
 require('dotenv').config();
 
 const app = express();
@@ -33,9 +33,7 @@ app.use(
   session({
     name: app.get('session cookie name'),
     secret: process.env.SECRET_KEY,
-    store: new FileStore({
-      secret: process.env.SECRET_KEY,
-    }),
+    store: new MongoStore({ mongooseConnection: mongoose.connection }),
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -43,6 +41,20 @@ app.use(
     },
   })
 );
+// app.use(
+//   session({
+//     name: app.get('session cookie name'),
+//     secret: process.env.SECRET_KEY,
+//     // store: new FileStore({
+//     //   secret: process.env.SECRET_KEY,
+//     // }),
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//       secure: process.env.NODE_ENV === 'production',
+//     },
+//   })
+// );
 
 app.use(userMiddleware);
 app.use('/', indexRouter);

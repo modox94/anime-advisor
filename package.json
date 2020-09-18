@@ -20,6 +20,7 @@
   "homepage": "https://github.com/crazynike94/solo-api-project#readme",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "connect-mongo": "^3.2.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
@@ -28,6 +29,7 @@
     "mongoose": "^5.10.5",
     "nyaapi": "^2.3.3",
     "path": "^0.12.7",
+    "redis": "^3.0.2",
     "session-file-store": "^1.4.0"
   },
   "devDependencies": {

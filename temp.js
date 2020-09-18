@@ -249,3 +249,16 @@ videoquality: ""
 vndbid: 0
 website_link: ""
 */
+
+const redis = require('redis');
+
+async function start() {
+  const client = await redis.createClient();
+  await client.on('error', function (error) {
+    console.error(error);
+  });
+  await client.set('foo', 'bar');
+
+  console.log('log', await client.get('foo'));
+}
+start();
