@@ -12,9 +12,8 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 4,
   },
-  search: { type: Array, default: [] }, // тут хранятся id сериалов/фильмов MAL
-  recommendations: { type: Object, default: {} }, // тут хранятся id сериалов/фильмов MAL
-  expections: { type: Array, default: [] }, // тут хранятся id сериалов/фильмов MAL
+  mal_login: String,
+  mal_password: String,
 });
 
 module.exports = mongoose.model('User', userSchema);

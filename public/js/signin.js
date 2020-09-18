@@ -7,13 +7,13 @@ signinForm.addEventListener('submit', async (event) => {
     username: { value: username },
     password: { value: password },
   } = event.target;
-  console.log(username, password);
+
   if (username.length >= 4 && password.length >= 4) {
     const body = {
       username,
       password,
     };
-    console.log(body);
+
     const response = await fetch('/signin', {
       method: 'POST',
       headers: {

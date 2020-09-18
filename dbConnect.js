@@ -1,11 +1,12 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-const { DB_PATH, DB_NAME } = process.env;
+const { DB_NAME, DB_LOGIN, DB_PASS } = process.env;
+const dbUrl = `mongodb+srv://${DB_LOGIN}:${DB_PASS}@cluster0.f3yi0.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
 
 const dbConnect = () => {
   mongoose.connect(
-    `${DB_PATH}${DB_NAME}`,
+    dbUrl,
     { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true },
     (err) => {
       if (err) throw err;

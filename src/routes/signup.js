@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const mongoose = require('mongoose');
 const User = require('../models/user.js');
 require('dotenv').config();
 
@@ -22,8 +21,9 @@ router.get('/', (req, res, next) => {
 
 router.post('/', async (req, res) => {
   const { username, password } = req.body;
+
   try {
-    const saltRounds = Number(process.env.SALT_ROUNDS ?? 10);
+    const saltRounds = Number(process.env.SALT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const user = await User.create({
       username,
@@ -35,6 +35,7 @@ router.post('/', async (req, res) => {
     console.error(err.message);
     return failAuth(res);
   }
-  return res.redirect('/');
+  return res.end();
+  // return res.redirect('/'); // через аякс не работает
 });
 module.exports = router;
