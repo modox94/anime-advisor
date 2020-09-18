@@ -24,6 +24,7 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('session cookie name', 'sid');
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
+app.set('trust proxy', 1);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
