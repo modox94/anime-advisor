@@ -42,20 +42,6 @@ app.use(
     },
   })
 );
-// app.use(
-//   session({
-//     name: app.get('session cookie name'),
-//     secret: process.env.SECRET_KEY,
-//     // store: new FileStore({
-//     //   secret: process.env.SECRET_KEY,
-//     // }),
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//       secure: process.env.NODE_ENV === 'production',
-//     },
-//   })
-// );
 
 app.use(userMiddleware);
 app.use('/', indexRouter);

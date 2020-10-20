@@ -1,6 +1,7 @@
 const express = require('express');
 const jikanjs = require('jikanjs');
 const { si, pantsu } = require('nyaapi');
+
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -44,20 +45,42 @@ router.post('/synopsis', async (req, res) => {
 
   let dataOfTitle = await jikanjs.loadAnime(id);
 
-  // pantsu
-  let arrayOfTorrents = await pantsu.search(dataOfTitle.title, 10, {
-    order: false,
-    sort: '4',
-    c: '3_5',
-    limit: 10,
-  });
+  let arrayOfTorrents = [];
+  // // pantsu
+  // try {
+  //   arrayOfTorrents = await pantsu.search(dataOfTitle.title, 10, {
+  //     order: false,
+  //     sort: '4',
+  //     c: '3_5',
+  //     limit: 10,
+  //   });
 
-  arrayOfTorrents = arrayOfTorrents.map((torrent) => {
-    torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
+  //   arrayOfTorrents = arrayOfTorrents.map((torrent) => {
+  //     torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
 
-    return torrent;
-  });
-  // pantsu
+  //     return torrent;
+  //   });
+  // } catch (error) {
+  //   if (error) console.log('id pantsu error', id, error.message);
+  // }
+
+  // if (!arrayOfTorrents.length) {
+  //   try {
+  //     arrayOfTorrents = await si.search(dataOfTitle.title, 10, {
+  //       order: false,
+  //       category: '3_5',
+  //     });
+
+  //     arrayOfTorrents = arrayOfTorrents.map((torrent) => {
+  //       torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
+
+  //       return torrent;
+  //     });
+  //   } catch (error) {
+  //     if (error) console.log('id si error', id, error.message);
+  //   }
+  // }
+  // // pantsu
 
   res.json(JSON.stringify({ dataOfTitle, arrayOfTorrents }));
 });

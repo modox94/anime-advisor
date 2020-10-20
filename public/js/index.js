@@ -45,7 +45,6 @@ async function callbackSearch(event) {
   });
 
   localStorage.setItem('searchResults', JSON.stringify(arrayOfTitles));
-  // localStorage.setItem('examplekey', searchInput.value);
 }
 
 function callbackClear(event) {
@@ -78,10 +77,6 @@ function callbackAdd(event) {
     currentButton.removeEventListener('click', callbackRecButton);
     currentButton.remove();
   }
-
-  // let arrayForRecommend = localStorage.getItem('arrayForRecommend');
-  // arrayForRecommend.push(card);
-  // localStorage.setItem('arrayForRecommend', arrayForRecommend);
 }
 
 // компилятор hbs
@@ -140,9 +135,7 @@ async function callbackSearchByRec() {
 
   let arrayOfRecomends = [];
   for (let id of arrayOfId) {
-    // if (id !== 'searchResults') {
     arrayOfRecomends.push(JSON.parse(localStorage.getItem(id)));
-    // }
   }
 
   let response = await fetch('/recommend', {
@@ -198,10 +191,8 @@ async function callbackSynopsis(event) {
     magnetHtml += '\n<br>';
     magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
   }
-  magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title.replace(
-    ' ',
-    '+'
-  )}">☠ Search more torrents... ☠</a>`;
+  if (magnetHtml)
+    magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title}">☠ Search more torrents... ☠</a>`;
 
   card.getElementsByClassName('card-text')[0].innerHTML =
     dataOfTitle.synopsis + magnetHtml;

@@ -36,6 +36,5 @@ router.post('/', async (req, res) => {
     return failAuth(res);
   }
   return res.end();
-  // return res.redirect('/'); // через аякс не работает
 });
 module.exports = router;
