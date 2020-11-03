@@ -46,23 +46,23 @@ router.post('/synopsis', async (req, res) => {
   let dataOfTitle = await jikanjs.loadAnime(id);
 
   let arrayOfTorrents = [];
-  // // pantsu
-  // try {
-  //   arrayOfTorrents = await pantsu.search(dataOfTitle.title, 10, {
-  //     order: false,
-  //     sort: '4',
-  //     c: '3_5',
-  //     limit: 10,
-  //   });
+  // pantsu
+  try {
+    arrayOfTorrents = await pantsu.search(dataOfTitle.title, 10, {
+      order: false,
+      sort: '4',
+      c: '3_5',
+      limit: 10,
+    });
 
-  //   arrayOfTorrents = arrayOfTorrents.map((torrent) => {
-  //     torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
+    arrayOfTorrents = arrayOfTorrents.map((torrent) => {
+      torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
 
-  //     return torrent;
-  //   });
-  // } catch (error) {
-  //   if (error) console.log('id pantsu error', id, error.message);
-  // }
+      return torrent;
+    });
+  } catch (error) {
+    if (error) console.log('id pantsu error', id, error.message);
+  }
 
   // if (!arrayOfTorrents.length) {
   //   try {
@@ -80,7 +80,7 @@ router.post('/synopsis', async (req, res) => {
   //     if (error) console.log('id si error', id, error.message);
   //   }
   // }
-  // // pantsu
+  // pantsu
 
   res.json(JSON.stringify({ dataOfTitle, arrayOfTorrents }));
 });
