@@ -125,7 +125,7 @@ async function callbackSearchByRec() {
 
   const { arrayOfId, arrayOfRecomends } = getLocalStorgeData();
 
-  if (!arrayOfId.length || !arrayOfRecomends.length) {
+  if (!arrayOfId?.length || !arrayOfRecomends?.length) {
     spinner.style.display = 'none';
     return;
   }
