@@ -15,12 +15,12 @@ function failAuth(res) {
   return res.status(401).end();
 }
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
   res.render('signup');
 });
 
 router.post('/', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
 
   try {
     const saltRounds = Number(process.env.SALT_ROUNDS);

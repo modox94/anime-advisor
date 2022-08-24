@@ -4,7 +4,7 @@ const jikanjs = require('jikanjs');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { term } = req.body;
+  const { term } = req.body || {};
 
   let arrayOfTitles = (await jikanjs.search('anime', term)).results;
 

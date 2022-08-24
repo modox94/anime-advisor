@@ -1,11 +1,11 @@
 const express = require('express');
 const jikanjs = require('jikanjs');
-const { si, pantsu } = require('nyaapi');
+const { pantsu } = require('nyaapi');
 
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { arrayOfId, arrayOfRecomends } = req.body;
+  const { arrayOfId } = req.body || {};
 
   let objectOfTitles = {};
   for (let id of arrayOfId) {
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
 });
 
 router.post('/synopsis', async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.body || {};
 
   let dataOfTitle = await jikanjs.loadAnime(id);
 

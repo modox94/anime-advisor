@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  if (req.session.user) {
+  if (req.session?.user) {
     // вытягивание из базы данных массивов
     return res.render('index', { index: true });
   }

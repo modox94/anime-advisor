@@ -1,3 +1,5 @@
+import { SEARCH_RESULTS, getLocalStorgeData } from './utils.js';
+
 let searchForm = document.getElementById('searchForm');
 let searchInput = document.getElementById('searchInput');
 let clearForm = document.getElementById('clearForm');
@@ -7,7 +9,6 @@ let resultContainer = document.getElementById('result');
 let recommendContainer = document.getElementById('recommend');
 
 let spinner = document.getElementById('spinner');
-let addButtons;
 
 searchForm.addEventListener('submit', callbackSearch);
 clearForm.addEventListener('click', callbackClear);
@@ -44,7 +45,7 @@ async function callbackSearch(event) {
     addButton.addEventListener('click', callbackAdd);
   });
 
-  localStorage.setItem('searchResults', JSON.stringify(arrayOfTitles));
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
 }
 
 function callbackClear(event) {
@@ -59,7 +60,7 @@ function callbackAdd(event) {
   let card = event.target.closest('.main-card');
 
   if (!localStorage.getItem(card.id)) {
-    let searchResults = JSON.parse(localStorage.getItem('searchResults'));
+    let searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
     let titleData;
     for (let title of searchResults) {
       if (card.id === String(title.mal_id)) {
@@ -83,6 +84,7 @@ function callbackAdd(event) {
 async function renderHbs(data, url) {
   let template = await fetch(url);
   template = await template.text();
+  // eslint-disable-next-line no-undef
   let itemRender = Handlebars.compile(template);
   return itemRender(data);
 }
@@ -109,33 +111,23 @@ function callbackRecButton(event) {
 }
 
 function start() {
-  let arrayOfId = Object.keys(localStorage);
+  const { arrayOfRecomends } = getLocalStorgeData();
 
-  for (let id of arrayOfId) {
-    if (id !== 'searchResults') {
-      let card = JSON.parse(localStorage.getItem(id));
+  arrayOfRecomends?.forEach((card) => {
+    if (card?.mal_id && card?.title) {
       makeRecButton(card.mal_id, card.title);
     }
-  }
+  });
 }
 
 async function callbackSearchByRec() {
   spinner.style.display = 'block';
 
-  let arrayOfId = Object.keys(localStorage);
-  let delId = arrayOfId.indexOf('searchResults');
-  if (delId !== -1) {
-    arrayOfId.splice(delId, 1);
-  }
+  const { arrayOfId, arrayOfRecomends } = getLocalStorgeData();
 
-  if (!arrayOfId.length) {
+  if (!arrayOfId.length || !arrayOfRecomends.length) {
     spinner.style.display = 'none';
     return;
-  }
-
-  let arrayOfRecomends = [];
-  for (let id of arrayOfId) {
-    arrayOfRecomends.push(JSON.parse(localStorage.getItem(id)));
   }
 
   let response = await fetch('/recommend', {
@@ -143,7 +135,7 @@ async function callbackSearchByRec() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ arrayOfId, arrayOfRecomends }), //второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
+    body: JSON.stringify({ arrayOfId, arrayOfRecomends }), // второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
   });
 
   let arrayOfTitles = JSON.parse(await response.json());
@@ -170,7 +162,7 @@ async function callbackSearchByRec() {
   });
 
   spinner.style.display = 'none';
-  localStorage.setItem('searchResults', JSON.stringify(arrayOfTitles));
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
 }
 
 async function callbackSynopsis(event) {
@@ -187,9 +179,11 @@ async function callbackSynopsis(event) {
   let { dataOfTitle, arrayOfTorrents } = JSON.parse(await response.json());
 
   let magnetHtml = '';
-  for (let torrent of arrayOfTorrents) {
-    magnetHtml += '\n<br>';
-    magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
+  if (arrayOfTorrents?.length) {
+    for (let torrent of arrayOfTorrents) {
+      magnetHtml += '\n<br>';
+      magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
+    }
   }
   if (magnetHtml)
     magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title}">☠ Search more torrents... ☠</a>`;
