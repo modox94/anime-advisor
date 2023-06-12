@@ -1,33 +1,45 @@
-const express = require('express');
-const jikanjs = require('jikanjs');
-const { pantsu } = require('nyaapi');
+const express = require("express");
+const Jikan = require("jikan4.js");
+const { pantsu } = require("nyaapi");
+const { get, set } = require("lodash");
 
+const client = new Jikan.Client();
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { arrayOfId } = req.body || {};
+  const objectOfTitles = {};
+  for (const id of arrayOfId) {
+    const curRecArr = (await client.anime.getRecommendations(id)) || [];
 
-  let objectOfTitles = {};
-  for (let id of arrayOfId) {
-    let currentArrRecom = (await jikanjs.loadAnime(id, 'recommendations'))
-      .recommendations;
+    for (const curRec of curRecArr) {
+      const curRecId = String(get(curRec, ["entry", "id"], ""));
+      const curRecImage = get(curRec, ["entry", "image", "default"], "");
+      const curRecTitle = get(curRec, ["entry", "title"], "");
+      const curRecUrl = get(curRec, ["entry", "url"], "");
+      const curRecVotes = get(curRec, ["votes"], "");
+      const recomCountPath = [curRecId, "recommendation_count"];
 
-    for (let currentRecom of currentArrRecom) {
-      if (
-        objectOfTitles[currentRecom.mal_id] &&
-        !arrayOfId.includes(String(currentRecom.mal_id))
-      ) {
-        objectOfTitles[currentRecom.mal_id]['recommendation_count'] +=
-          currentRecom.recommendation_count;
-      } else if (!arrayOfId.includes(String(currentRecom.mal_id))) {
-        objectOfTitles[currentRecom.mal_id] = currentRecom;
-        objectOfTitles[currentRecom.mal_id]['recommendation_count'] =
-          currentRecom.recommendation_count;
+      if (!objectOfTitles[curRecId]) {
+        set(objectOfTitles, [curRecId, "id"], curRecId);
+        set(
+          objectOfTitles,
+          [curRecId, "image", "webp", "default"],
+          curRecImage
+        );
+        set(objectOfTitles, [curRecId, "title", "default"], curRecTitle);
+        set(objectOfTitles, [curRecId, "url"], curRecUrl);
+        set(objectOfTitles, recomCountPath, curRecVotes);
+      }
+
+      if (!arrayOfId.includes(curRecId)) {
+        const oldValue = get(objectOfTitles, recomCountPath, 0);
+        set(objectOfTitles, recomCountPath, oldValue + curRec.votes);
       }
     }
   }
 
-  let arrayOfTitles = Object.values(objectOfTitles).sort(function (a, b) {
+  const arrayOfTitles = Object.values(objectOfTitles).sort(function (a, b) {
     if (a.recommendation_count < b.recommendation_count) {
       return 1;
     }
@@ -40,20 +52,21 @@ router.post('/', async (req, res) => {
   res.json(JSON.stringify(arrayOfTitles));
 });
 
-router.post('/synopsis', async (req, res) => {
+router.post("/synopsis", async (req, res) => {
   const { id } = req.body || {};
 
-  let dataOfTitle = await jikanjs.loadAnime(id);
+  const dataOfTitle = await client.anime.get(id);
 
   let arrayOfTorrents = [];
-  // pantsu
+  // pantsu TODO
   try {
-    arrayOfTorrents = await pantsu.search(dataOfTitle.title, 10, {
-      order: false,
-      sort: '4',
-      c: '3_5',
-      limit: 10,
-    });
+    arrayOfTorrents =
+      (await pantsu.search(dataOfTitle.title.toString(), 10, {
+        order: false,
+        sort: "4",
+        c: "3_5",
+        limit: 10,
+      })) || [];
 
     arrayOfTorrents = arrayOfTorrents.map((torrent) => {
       torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
@@ -61,7 +74,7 @@ router.post('/synopsis', async (req, res) => {
       return torrent;
     });
   } catch (error) {
-    if (error) console.log('id pantsu error', id, error.message);
+    if (error) console.log("id pantsu error", id, error.message);
   }
 
   // if (!arrayOfTorrents.length) {

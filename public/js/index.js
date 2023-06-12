@@ -1,48 +1,48 @@
-import { SEARCH_RESULTS, getLocalStorgeData } from './utils.js';
+import { SEARCH_RESULTS, getLocalStorgeData } from "./utils.js";
 
-let searchForm = document.getElementById('searchForm');
-let searchInput = document.getElementById('searchInput');
-let clearForm = document.getElementById('clearForm');
-let searchByRec = document.getElementById('searchByRec');
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchInput");
+const clearForm = document.getElementById("clearForm");
+const searchByRec = document.getElementById("searchByRec");
 
-let resultContainer = document.getElementById('result');
-let recommendContainer = document.getElementById('recommend');
+const resultContainer = document.getElementById("result");
+const recommendContainer = document.getElementById("recommend");
 
-let spinner = document.getElementById('spinner');
+const spinner = document.getElementById("spinner");
 
-searchForm.addEventListener('submit', callbackSearch);
-clearForm.addEventListener('click', callbackClear);
-searchByRec.addEventListener('click', callbackSearchByRec);
+searchForm.addEventListener("submit", callbackSearch);
+clearForm.addEventListener("click", callbackClear);
+searchByRec.addEventListener("click", callbackSearchByRec);
 start();
 
 async function callbackSearch(event) {
   event.preventDefault();
-  spinner.style.display = 'block';
+  spinner.style.display = "block";
 
-  let response = await fetch('/search', {
-    method: 'POST',
+  const response = await fetch("/search", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ term: searchInput.value }),
   });
 
-  let arrayOfTitles = JSON.parse(await response.json());
+  const arrayOfTitles = JSON.parse(await response.json());
 
-  for (let title of arrayOfTitles) {
-    if (localStorage.getItem(title.mal_id)) {
+  for (const title of arrayOfTitles) {
+    if (localStorage.getItem(title.id)) {
       title.alreadyAdd = true;
     }
   }
 
-  let html = await renderHbs({ arrayOfTitles }, '/hbs/card.hbs');
+  const html = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
 
-  spinner.style.display = 'none';
+  spinner.style.display = "none";
   resultContainer.innerHTML = html;
 
-  let addButtons = [...document.getElementsByClassName('add')];
+  const addButtons = [...document.getElementsByClassName("add")]; // TODO
   addButtons.forEach((addButton) => {
-    addButton.addEventListener('click', callbackAdd);
+    addButton.addEventListener("click", callbackAdd);
   });
 
   localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
@@ -52,30 +52,36 @@ function callbackClear(event) {
   event.preventDefault();
   searchForm.reset();
   localStorage.clear();
-  resultContainer.innerHTML = '';
-  recommendContainer.innerHTML = '';
+  resultContainer.innerHTML = "";
+  recommendContainer.innerHTML = "";
 }
 
 function callbackAdd(event) {
-  let card = event.target.closest('.main-card');
+  const card = event.target.closest(".main-card");
 
   if (!localStorage.getItem(card.id)) {
-    let searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
+    const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
+
+    console.log("searchResults", searchResults);
+
     let titleData;
-    for (let title of searchResults) {
-      if (card.id === String(title.mal_id)) {
+    for (const title of searchResults) {
+      if (card.id === String(title.id)) {
         titleData = title;
         break;
       }
     }
-    event.target.className = 'btn btn-sm btn-success add';
+
+    console.log("titleData", titleData);
+
+    event.target.className = "btn btn-sm btn-success add"; // TODO
     localStorage.setItem(card.id, JSON.stringify(titleData));
-    makeRecButton(titleData.mal_id, titleData.title);
+    makeRecButton(titleData.id, titleData.title?.default); // TODO
   } else {
-    event.target.className = 'btn btn-sm btn-outline-secondary add';
+    event.target.className = "btn btn-sm btn-outline-secondary add"; // TODO
     localStorage.removeItem(card.id);
-    let currentButton = document.querySelector(`[data-id="${card.id}"]`);
-    currentButton.removeEventListener('click', callbackRecButton);
+    const currentButton = document.querySelector(`[data-id="${card.id}"]`);
+    currentButton.removeEventListener("click", callbackRecButton);
     currentButton.remove();
   }
 }
@@ -85,28 +91,28 @@ async function renderHbs(data, url) {
   let template = await fetch(url);
   template = await template.text();
   // eslint-disable-next-line no-undef
-  let itemRender = Handlebars.compile(template);
+  const itemRender = Handlebars.compile(template);
   return itemRender(data);
 }
 
 function makeRecButton(id, title) {
-  let currentButton = document.createElement('button');
+  const currentButton = document.createElement("button");
   currentButton.dataset.id = id;
-  currentButton.className = 'btn btn-warning mx-1 my-1';
+  currentButton.className = "btn btn-warning mx-1 my-1";
   currentButton.innerText = title;
 
   recommendContainer.appendChild(currentButton);
-  currentButton.addEventListener('click', callbackRecButton);
+  currentButton.addEventListener("click", callbackRecButton);
 }
 
 function callbackRecButton(event) {
-  event.target.removeEventListener('click', callbackRecButton);
+  event.target.removeEventListener("click", callbackRecButton);
   localStorage.removeItem(event.target.dataset.id);
   event.target.remove();
-  let currentCard = document.getElementById(event.target.dataset.id);
+  const currentCard = document.getElementById(event.target.dataset.id);
   if (currentCard) {
-    currentCard.getElementsByClassName('add')[0].className =
-      'btn btn-sm btn-outline-secondary add';
+    currentCard.getElementsByClassName("add")[0].className =
+      "btn btn-sm btn-outline-secondary add"; // TODO
   }
 }
 
@@ -114,84 +120,84 @@ function start() {
   const { arrayOfRecomends } = getLocalStorgeData();
 
   arrayOfRecomends?.forEach((card) => {
-    if (card?.mal_id && card?.title) {
-      makeRecButton(card.mal_id, card.title);
+    if (card?.id && card?.title) {
+      makeRecButton(card.id, card.title?.default);
     }
   });
 }
 
 async function callbackSearchByRec() {
-  spinner.style.display = 'block';
+  spinner.style.display = "block";
 
   const { arrayOfId, arrayOfRecomends } = getLocalStorgeData();
 
   if (!arrayOfId?.length || !arrayOfRecomends?.length) {
-    spinner.style.display = 'none';
+    spinner.style.display = "none";
     return;
   }
 
-  let response = await fetch('/recommend', {
-    method: 'POST',
+  const response = await fetch("/recommend", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ arrayOfId, arrayOfRecomends }), // второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
   });
 
-  let arrayOfTitles = JSON.parse(await response.json());
+  const arrayOfTitles = JSON.parse(await response.json());
 
-  for (let title of arrayOfTitles) {
-    if (localStorage.getItem(title.mal_id)) {
+  for (const title of arrayOfTitles) {
+    if (localStorage.getItem(title.id)) {
       title.alreadyAdd = true;
     }
   }
 
   resultContainer.innerHTML = await renderHbs(
     { arrayOfTitles, recommend: true },
-    '/hbs/card.hbs'
+    "/hbs/card.hbs"
   );
 
-  let addButtons = [...document.getElementsByClassName('add')];
+  const addButtons = [...document.getElementsByClassName("add")]; // TODO
   addButtons.forEach((addButton) => {
-    addButton.addEventListener('click', callbackAdd);
+    addButton.addEventListener("click", callbackAdd);
   });
 
-  let synopsisButtons = [...document.getElementsByClassName('synopsis')];
+  const synopsisButtons = [...document.getElementsByClassName("synopsis")];
   synopsisButtons.forEach((synopsisButton) => {
-    synopsisButton.addEventListener('click', callbackSynopsis);
+    synopsisButton.addEventListener("click", callbackSynopsis);
   });
 
-  spinner.style.display = 'none';
+  spinner.style.display = "none";
   localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
 }
 
 async function callbackSynopsis(event) {
-  let card = event.target.closest('.main-card');
+  const card = event.target.closest(".main-card");
 
-  let response = await fetch('/recommend/synopsis', {
-    method: 'POST',
+  const response = await fetch("/recommend/synopsis", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ id: card.id }),
   });
 
-  let { dataOfTitle, arrayOfTorrents } = JSON.parse(await response.json());
+  const { dataOfTitle, arrayOfTorrents } = JSON.parse(await response.json());
 
-  let magnetHtml = '';
+  let magnetHtml = "";
   if (arrayOfTorrents?.length) {
-    for (let torrent of arrayOfTorrents) {
-      magnetHtml += '\n<br>';
+    for (const torrent of arrayOfTorrents) {
+      magnetHtml += "\n<br>";
       magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
     }
   }
   if (magnetHtml)
     magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title}">☠ Search more torrents... ☠</a>`;
 
-  card.getElementsByClassName('card-text')[0].innerHTML =
+  card.getElementsByClassName("card-text")[0].innerHTML =
     dataOfTitle.synopsis + magnetHtml;
 
-  event.target.removeEventListener('click', callbackSynopsis);
+  event.target.removeEventListener("click", callbackSynopsis);
   event.target.remove();
 }
 

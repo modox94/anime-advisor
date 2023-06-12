@@ -1,13 +1,12 @@
-const express = require('express');
-const jikanjs = require('jikanjs');
+const express = require("express");
+const Jikan = require("jikan4.js");
 
+const client = new Jikan.Client();
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { term } = req.body || {};
-
-  let arrayOfTitles = (await jikanjs.search('anime', term)).results;
-
+  const arrayOfTitles = (await client.anime.search(term)) || [];
   res.json(JSON.stringify(arrayOfTitles));
 });
 

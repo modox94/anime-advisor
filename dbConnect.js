@@ -1,5 +1,5 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
+require("dotenv").config();
+const mongoose = require("mongoose");
 
 const { DB_NAME, DB_LOGIN, DB_PASS } = process.env;
 const dbUrl = `mongodb+srv://${DB_LOGIN}:${DB_PASS}@cluster0.f3yi0.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
@@ -11,7 +11,7 @@ const dbConnect = async () => {
       { useUnifiedTopology: true, useNewUrlParser: true },
       (err) => {
         if (err) throw err;
-        console.log('DB connection success');
+        console.log("DB connection success");
       }
     )
     .asPromise();
