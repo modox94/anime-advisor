@@ -1,4 +1,28 @@
 import { SEARCH_RESULTS, getLocalStorgeData } from "./utils.js";
+import isFinite from "./lodash/isFinite.js";
+
+// eslint-disable-next-line no-undef
+const { Tooltip } = bootstrap;
+const tooltipsStore = [];
+
+const turnOnTooltip = (event) => {
+  const { target } = event;
+  const { scrollWidth, clientWidth } = target;
+
+  if (!target || !isFinite(scrollWidth) || !isFinite(clientWidth)) {
+    return;
+  }
+
+  if (scrollWidth > clientWidth) {
+    const tooltip = Tooltip.getOrCreateInstance(target);
+    tooltipsStore.push(tooltip);
+  } else {
+    const tooltip = Tooltip.getInstance(target);
+    if (tooltip) {
+      tooltip.dispose();
+    }
+  }
+};
 
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
@@ -35,14 +59,39 @@ async function callbackSearch(event) {
     }
   }
 
-  const html = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
+  const renderedResult = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
+
+  resultContainer.innerHTML = renderedResult;
 
   spinner.style.display = "none";
-  resultContainer.innerHTML = html;
 
   const addButtons = [...document.getElementsByClassName("add")]; // TODO
   addButtons.forEach((addButton) => {
     addButton.addEventListener("click", callbackAdd);
+  });
+
+  const tooltipTriggerList = document.querySelectorAll(
+    '[data-bs-toggle="tooltip"]'
+  );
+  [...tooltipTriggerList].map((tooltipTriggerEl) => {
+    const curTooltip = new Tooltip(tooltipTriggerEl, {
+      placement: "auto",
+    });
+    tooltipTriggerEl.addEventListener("show.bs.tooltip", (event) => {
+      // console.log("show.bs.tooltip", event);
+      console.log("show.bs.tooltip");
+      const {
+        target: { scrollWidth, clientWidth },
+      } = event;
+
+      console.log(scrollWidth, clientWidth);
+
+      if (scrollWidth <= clientWidth) {
+        console.log("hide", curTooltip);
+        curTooltip.hide();
+        curTooltip.disable();
+      }
+    });
   });
 
   localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
@@ -57,7 +106,7 @@ function callbackClear(event) {
 }
 
 function callbackAdd(event) {
-  const card = event.target.closest(".main-card");
+  const card = event.target.closest(".card");
 
   if (!localStorage.getItem(card.id)) {
     const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
@@ -86,7 +135,6 @@ function callbackAdd(event) {
   }
 }
 
-// компилятор hbs
 async function renderHbs(data, url) {
   let template = await fetch(url);
   template = await template.text();
@@ -98,11 +146,10 @@ async function renderHbs(data, url) {
 function makeRecButton(id, title) {
   const currentButton = document.createElement("button");
   currentButton.dataset.id = id;
-  currentButton.className = "btn btn-warning mx-1 my-1";
+  currentButton.classList.add("btn", "btn-warning", "m-1");
   currentButton.innerText = title;
-
-  recommendContainer.appendChild(currentButton);
   currentButton.addEventListener("click", callbackRecButton);
+  recommendContainer.appendChild(currentButton);
 }
 
 function callbackRecButton(event) {
@@ -152,27 +199,52 @@ async function callbackSearchByRec() {
     }
   }
 
-  resultContainer.innerHTML = await renderHbs(
-    { arrayOfTitles, recommend: true },
-    "/hbs/card.hbs"
-  );
+  const renderedResult = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
 
-  const addButtons = [...document.getElementsByClassName("add")]; // TODO
+  resultContainer.innerHTML = renderedResult;
+
+  const addButtons = [...resultContainer.querySelectorAll(".add")]; // TODO
   addButtons.forEach((addButton) => {
     addButton.addEventListener("click", callbackAdd);
   });
 
-  const synopsisButtons = [...document.getElementsByClassName("synopsis")];
+  const synopsisButtons = [...resultContainer.querySelectorAll(".synopsis")];
   synopsisButtons.forEach((synopsisButton) => {
     synopsisButton.addEventListener("click", callbackSynopsis);
   });
+
+  const tooltipTriggerList = resultContainer.querySelectorAll(
+    '[data-bs-toggle="tooltip"]'
+  );
+  tooltipTriggerList.forEach((tooltipTrigger) => {
+    tooltipTrigger.addEventListener("pointerenter", turnOnTooltip);
+  });
+  // [...tooltipTriggerList].map((tooltipTriggerEl) => {
+  //   // eslint-disable-next-line no-undef
+  //   const curTooltip = new Tooltip(tooltipTriggerEl, {
+  //     placement: "auto",
+  //   });
+  //   tooltipTriggerEl.addEventListener("show.bs.tooltip", (event) => {
+  //     // console.log("show.bs.tooltip", event);
+  //     console.log("show.bs.tooltip");
+  //     const {
+  //       target: { scrollWidth, clientWidth },
+  //     } = event;
+
+  //     console.log(scrollWidth, clientWidth);
+
+  //     if (scrollWidth <= clientWidth) {
+  //       curTooltip.hide();
+  //     }
+  //   });
+  // });
 
   spinner.style.display = "none";
   localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
 }
 
 async function callbackSynopsis(event) {
-  const card = event.target.closest(".main-card");
+  const card = event.target.closest(".card");
 
   const response = await fetch("/recommend/synopsis", {
     method: "POST",

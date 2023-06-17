@@ -1,4 +1,4 @@
-export const SEARCH_RESULTS = 'searchResults';
+export const SEARCH_RESULTS = "searchResults";
 
 export const getLocalStorgeData = () => {
   const result = {};
@@ -9,9 +9,9 @@ export const getLocalStorgeData = () => {
       try {
         result[SEARCH_RESULTS] = JSON.parse(value);
       } catch (error) {
-        console.log('invalid local storge record');
-        console.log('key', key);
-        console.log('value', value);
+        console.log("invalid local storge record");
+        console.log("key", key);
+        console.log("value", value);
       }
       continue;
     }
@@ -28,9 +28,9 @@ export const getLocalStorgeData = () => {
         result.arrayOfId.push(key);
         result.arrayOfRecomends.push(valueParsed);
       } catch (error) {
-        console.log('invalid local storge record');
-        console.log('key', key);
-        console.log('value', value);
+        console.log("invalid local storge record");
+        console.log("key", key);
+        console.log("value", value);
       }
     }
   }

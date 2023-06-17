@@ -1,21 +1,23 @@
 {{#each arrayOfTitles}}
-<div id="{{this.id}}" class="{{#if ../recommend}}col-md-4{{else}}col-md-3{{/if}} main-card">
-  <div class="card mb-3 shadow-sm">
-    <img class="img-thumbnail card-img-top" src="{{this.image.webp.default}}" alt="{{this.title.default}}">
+<div class="col">
+  <div id="{{this.id}}" class="card h-100 border-no-radius">
+    <img class="card-img-top poster-aspect-ratio" src="{{this.image.webp.default}}" alt="{{this.title.default}}">
     </img>
-    <div class="card-body">
-      <h5>{{this.title.default}}</h5>
-      <p class="card-text">{{this.synopsis}}</p>
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="btn-group">
-          <div type="button"
-            class="btn btn-sm add {{#if this.alreadyAdd}}btn-success{{else}}btn-outline-secondary{{/if}}">
-            Add</div>
-          {{#unless this.synopsis}}
-          <div type="button" class="btn btn-sm btn-outline-secondary synopsis">Download description</div>
-          {{/unless}}
-          <a href="{{this.url}}" class="btn btn-sm btn-outline-secondary" role="button" aria-pressed="true">MAL</a>
-        </div>
+    <div class="card-header text-truncate" data-bs-toggle="tooltip" data-bs-title="{{this.title.default}}">
+      {{this.title.default}}</div>
+    <div class="card-body max-height">
+      <p class="card-text line-сlamp">{{this.synopsis}}</p>
+    </div>
+    <div class="card-footer">
+      <div class="btn-group w-100">
+        <div type="button"
+          class="btn btn-sm add {{#if this.alreadyAdd}}btn-success{{else}}btn-outline-secondary{{/if}}">
+          Add</div>
+        {{#unless this.synopsis}}
+        <div type="button" class="btn btn-sm btn-outline-secondary synopsis">Download description</div>
+        {{/unless}}
+        <a href="{{this.url}}" target="_blank" class="btn btn-sm btn-outline-secondary" role="button"
+          aria-pressed="true">MAL</a>
       </div>
     </div>
   </div>

@@ -1,0 +1,4 @@
+{
+  "ext": "js,mjs,json,hbs,css",
+  "ignore": ["sessions"]
+}
