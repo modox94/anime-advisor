@@ -39,7 +39,7 @@ router.post("/", async (req, res) => {
     }
   }
 
-  const arrayOfTitles = Object.values(objectOfTitles).sort(function (a, b) {
+  const cardsArray = Object.values(objectOfTitles).sort(function (a, b) {
     if (a.recommendation_count < b.recommendation_count) {
       return 1;
     }
@@ -49,7 +49,7 @@ router.post("/", async (req, res) => {
     return 0;
   });
 
-  res.json(JSON.stringify(arrayOfTitles));
+  res.json(JSON.stringify(cardsArray));
 });
 
 router.post("/synopsis", async (req, res) => {

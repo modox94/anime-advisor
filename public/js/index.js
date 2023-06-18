@@ -1,9 +1,15 @@
-import { SEARCH_RESULTS, getLocalStorgeData } from "./utils.js";
 import isFinite from "./lodash/isFinite.js";
+import isFunction from "./lodash/isFunction.js";
+import noop from "./lodash/noop.js";
+import remove from "./lodash/remove.js";
+import { SEARCH_RESULTS, getLocalStorgeData } from "./utils.js";
 
 // eslint-disable-next-line no-undef
 const { Tooltip } = bootstrap;
 const tooltipsStore = [];
+// eslint-disable-next-line no-undef
+const { compile } = Handlebars;
+const templatesStore = {};
 
 const turnOnTooltip = (event) => {
   const { target } = event;
@@ -13,16 +19,49 @@ const turnOnTooltip = (event) => {
     return;
   }
 
+  const oldTooltip = Tooltip.getInstance(target);
+
   if (scrollWidth > clientWidth) {
-    const tooltip = Tooltip.getOrCreateInstance(target);
-    tooltipsStore.push(tooltip);
-  } else {
-    const tooltip = Tooltip.getInstance(target);
-    if (tooltip) {
-      tooltip.dispose();
+    if (!oldTooltip) {
+      const newTooltip = Tooltip.getOrCreateInstance(target);
+      tooltipsStore.push(newTooltip);
     }
+  } else if (oldTooltip) {
+    remove(tooltipsStore, (tooltipItem) => tooltipItem === oldTooltip);
+    oldTooltip.dispose();
   }
 };
+
+async function renderHbs(data, url) {
+  let templateFn = noop;
+  if (templatesStore[url] && isFunction(templatesStore[url])) {
+    templateFn = templatesStore[url];
+  } else {
+    const templateRaw = await fetch(url);
+    const template = await templateRaw.text();
+    templateFn = compile(template);
+    templatesStore[url] = templateFn;
+  }
+
+  return templateFn(data);
+}
+
+function descriptionToogle(event) {
+  if (!event || !event.target) {
+    return;
+  }
+
+  const card = event.target.closest(".card");
+  if (!card) {
+    return;
+  }
+
+  const cardText = card.querySelector(".card-text") || {};
+
+  if ((cardText.innerText || "").trim()) {
+    cardText.classList.toggle("line-сlamp");
+  }
+}
 
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
@@ -45,64 +84,24 @@ async function callbackSearch(event) {
 
   const response = await fetch("/search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ term: searchInput.value }),
   });
+  const cardsArray = JSON.parse(await response.json());
 
-  const arrayOfTitles = JSON.parse(await response.json());
-
-  for (const title of arrayOfTitles) {
-    if (localStorage.getItem(title.id)) {
-      title.alreadyAdd = true;
-    }
-  }
-
-  const renderedResult = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
-
-  resultContainer.innerHTML = renderedResult;
+  await renderCards(cardsArray);
 
   spinner.style.display = "none";
-
-  const addButtons = [...document.getElementsByClassName("add")]; // TODO
-  addButtons.forEach((addButton) => {
-    addButton.addEventListener("click", callbackAdd);
-  });
-
-  const tooltipTriggerList = document.querySelectorAll(
-    '[data-bs-toggle="tooltip"]'
-  );
-  [...tooltipTriggerList].map((tooltipTriggerEl) => {
-    const curTooltip = new Tooltip(tooltipTriggerEl, {
-      placement: "auto",
-    });
-    tooltipTriggerEl.addEventListener("show.bs.tooltip", (event) => {
-      // console.log("show.bs.tooltip", event);
-      console.log("show.bs.tooltip");
-      const {
-        target: { scrollWidth, clientWidth },
-      } = event;
-
-      console.log(scrollWidth, clientWidth);
-
-      if (scrollWidth <= clientWidth) {
-        console.log("hide", curTooltip);
-        curTooltip.hide();
-        curTooltip.disable();
-      }
-    });
-  });
-
-  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray));
 }
 
 function callbackClear(event) {
   event.preventDefault();
+  renderCards([]);
+
   searchForm.reset();
   localStorage.clear();
-  resultContainer.innerHTML = "";
-  recommendContainer.innerHTML = "";
+  recommendContainer.innerHTML = ""; // TODO
 }
 
 function callbackAdd(event) {
@@ -110,8 +109,6 @@ function callbackAdd(event) {
 
   if (!localStorage.getItem(card.id)) {
     const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
-
-    console.log("searchResults", searchResults);
 
     let titleData;
     for (const title of searchResults) {
@@ -121,26 +118,20 @@ function callbackAdd(event) {
       }
     }
 
-    console.log("titleData", titleData);
-
-    event.target.className = "btn btn-sm btn-success add"; // TODO
-    localStorage.setItem(card.id, JSON.stringify(titleData));
-    makeRecButton(titleData.id, titleData.title?.default); // TODO
+    if (titleData) {
+      event.target.classList.replace("btn-outline-secondary", "btn-success");
+      localStorage.setItem(card.id, JSON.stringify(titleData));
+      makeRecButton(titleData.id, titleData.title?.default);
+    }
   } else {
-    event.target.className = "btn btn-sm btn-outline-secondary add"; // TODO
+    event.target.classList.replace("btn-success", "btn-outline-secondary");
     localStorage.removeItem(card.id);
-    const currentButton = document.querySelector(`[data-id="${card.id}"]`);
-    currentButton.removeEventListener("click", callbackRecButton);
-    currentButton.remove();
+    const currentButton = document.querySelector(`[data-id="${card.id}"]`); //TODO
+    if (currentButton) {
+      currentButton.removeEventListener("click", callbackRecButton);
+      currentButton.remove();
+    }
   }
-}
-
-async function renderHbs(data, url) {
-  let template = await fetch(url);
-  template = await template.text();
-  // eslint-disable-next-line no-undef
-  const itemRender = Handlebars.compile(template);
-  return itemRender(data);
 }
 
 function makeRecButton(id, title) {
@@ -158,8 +149,9 @@ function callbackRecButton(event) {
   event.target.remove();
   const currentCard = document.getElementById(event.target.dataset.id);
   if (currentCard) {
-    currentCard.getElementsByClassName("add")[0].className =
-      "btn btn-sm btn-outline-secondary add"; // TODO
+    currentCard
+      .querySelector(".add")
+      .classList.replace("btn-success", "btn-outline-secondary");
   }
 }
 
@@ -171,6 +163,75 @@ function start() {
       makeRecButton(card.id, card.title?.default);
     }
   });
+}
+
+async function renderCards(cardsArray) {
+  if (!cardsArray) {
+    return;
+  }
+
+  if (tooltipsStore.length > 0) {
+    tooltipsStore.forEach((tooltip) => {
+      if (tooltip && isFunction(tooltip.dispose)) {
+        tooltip.dispose();
+      }
+    });
+    remove(tooltipsStore);
+  }
+
+  resultContainer
+    .querySelectorAll(".add")
+    .forEach((addButton) =>
+      addButton.removeEventListener("click", callbackAdd)
+    );
+
+  resultContainer
+    .querySelectorAll(".synopsis")
+    .forEach((synopsisButton) =>
+      synopsisButton.removeEventListener("click", callbackSynopsis)
+    );
+
+  resultContainer
+    .querySelectorAll('.card .card-header[data-bs-toggle="tooltip"]')
+    .forEach((tooltipTrigger) =>
+      tooltipTrigger.removeEventListener("pointerenter", turnOnTooltip)
+    );
+
+  resultContainer
+    .querySelectorAll(".card .card-body")
+    .forEach((cardBody) =>
+      cardBody.removeEventListener("click", descriptionToogle)
+    );
+
+  for (const card of cardsArray) {
+    if (localStorage.getItem(card.id)) {
+      card.alreadyAdd = true;
+    }
+  }
+  const renderedResult = await renderHbs({ cardsArray }, "/hbs/card.hbs");
+  resultContainer.innerHTML = renderedResult;
+
+  resultContainer
+    .querySelectorAll(".add")
+    .forEach((addButton) => addButton.addEventListener("click", callbackAdd));
+
+  resultContainer
+    .querySelectorAll(".synopsis")
+    .forEach((synopsisButton) =>
+      synopsisButton.addEventListener("click", callbackSynopsis)
+    );
+
+  resultContainer
+    .querySelectorAll('.card .card-header[data-bs-toggle="tooltip"]')
+    .forEach((tooltipTrigger) =>
+      tooltipTrigger.addEventListener("pointerenter", turnOnTooltip)
+    );
+
+  resultContainer
+    .querySelectorAll(".card .card-body")
+    .forEach((cardBody) =>
+      cardBody.addEventListener("click", descriptionToogle)
+    );
 }
 
 async function callbackSearchByRec() {
@@ -185,72 +246,30 @@ async function callbackSearchByRec() {
 
   const response = await fetch("/recommend", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ arrayOfId, arrayOfRecomends }), // второй вариант - передавать только id всем хороший, но при разростании проекта будут беды с соотнесением с какого тайтла какая рекомендация
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ arrayOfId, arrayOfRecomends }),
   });
+  const cardsArray = JSON.parse(await response.json());
 
-  const arrayOfTitles = JSON.parse(await response.json());
-
-  for (const title of arrayOfTitles) {
-    if (localStorage.getItem(title.id)) {
-      title.alreadyAdd = true;
-    }
-  }
-
-  const renderedResult = await renderHbs({ arrayOfTitles }, "/hbs/card.hbs");
-
-  resultContainer.innerHTML = renderedResult;
-
-  const addButtons = [...resultContainer.querySelectorAll(".add")]; // TODO
-  addButtons.forEach((addButton) => {
-    addButton.addEventListener("click", callbackAdd);
-  });
-
-  const synopsisButtons = [...resultContainer.querySelectorAll(".synopsis")];
-  synopsisButtons.forEach((synopsisButton) => {
-    synopsisButton.addEventListener("click", callbackSynopsis);
-  });
-
-  const tooltipTriggerList = resultContainer.querySelectorAll(
-    '[data-bs-toggle="tooltip"]'
-  );
-  tooltipTriggerList.forEach((tooltipTrigger) => {
-    tooltipTrigger.addEventListener("pointerenter", turnOnTooltip);
-  });
-  // [...tooltipTriggerList].map((tooltipTriggerEl) => {
-  //   // eslint-disable-next-line no-undef
-  //   const curTooltip = new Tooltip(tooltipTriggerEl, {
-  //     placement: "auto",
-  //   });
-  //   tooltipTriggerEl.addEventListener("show.bs.tooltip", (event) => {
-  //     // console.log("show.bs.tooltip", event);
-  //     console.log("show.bs.tooltip");
-  //     const {
-  //       target: { scrollWidth, clientWidth },
-  //     } = event;
-
-  //     console.log(scrollWidth, clientWidth);
-
-  //     if (scrollWidth <= clientWidth) {
-  //       curTooltip.hide();
-  //     }
-  //   });
-  // });
+  await renderCards(cardsArray);
 
   spinner.style.display = "none";
-  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(arrayOfTitles));
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray));
 }
 
 async function callbackSynopsis(event) {
-  const card = event.target.closest(".card");
+  const button = event.target;
+  button.removeEventListener("click", callbackSynopsis);
+
+  button.innerHTML =
+    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="visually-hidden">Loading...</span>';
+  button.disabled = true;
+
+  const card = button.closest(".card");
 
   const response = await fetch("/recommend/synopsis", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: card.id }),
   });
 
@@ -263,14 +282,16 @@ async function callbackSynopsis(event) {
       magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
     }
   }
-  if (magnetHtml)
+  if (magnetHtml) {
     magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title}">☠ Search more torrents... ☠</a>`;
+  }
 
-  card.getElementsByClassName("card-text")[0].innerHTML =
-    dataOfTitle.synopsis + magnetHtml;
+  const cardText = card.querySelector(".card-text") || {};
+  cardText.innerHTML = dataOfTitle.synopsis + magnetHtml;
 
-  event.target.removeEventListener("click", callbackSynopsis);
-  event.target.remove();
+  descriptionToogle(event);
+
+  button.remove();
 }
 
 /*
@@ -280,16 +301,3 @@ async function callbackSynopsis(event) {
 после нажажатия на поиск рекомендация у нас стирается результат поиска,
 создается новая группа тайтлов поиск по рекомендациям, индексы для которых мы будем хранить в локалсторадж
 */
-
-// // плавное удаление элемента
-// function removeBlock() {
-//   let block = this;
-//   block.style.opacity = 1;
-//   let blockId = setInterval(function () {
-//     if (block.style.opacity > 0) block.style.opacity -= 0.1;
-//     else {
-//       clearInterval(blockId);
-//       block.remove();
-//     }
-//   }, 60);
-// }

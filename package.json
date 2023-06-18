@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crazynike94/solo-api-project.git"
+    "url": "git+https://github.com/modox94/anime-advisor.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/crazynike94/solo-api-project/issues"
+    "url": "https://github.com/modox94/anime-advisor/issues"
   },
-  "homepage": "https://github.com/crazynike94/solo-api-project#readme",
+  "homepage": "https://github.com/modox94/anime-advisor#readme",
   "dependencies": {
     "bcrypt": "^5.1.0",
     "connect-mongo": "^5.0.0",

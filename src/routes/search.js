@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   const { term } = req.body || {};
-  const arrayOfTitles = (await client.anime.search(term)) || [];
-  res.json(JSON.stringify(arrayOfTitles));
+  const cardsArray = (await client.anime.search(term)) || [];
+  res.json(JSON.stringify(cardsArray));
 });
 
 module.exports = router;
