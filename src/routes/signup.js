@@ -1,8 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const User = require('../models/user.js');
-require('dotenv').config();
+const bcrypt = require("bcrypt");
+const User = require("../models/user.js");
 
 function serializeUser(user) {
   return {
@@ -15,11 +14,11 @@ function failAuth(res) {
   return res.status(401).end();
 }
 
-router.get('/', (req, res) => {
-  res.render('signup');
+router.get("/", (req, res) => {
+  res.render("signup");
 });
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const { username, password } = req.body || {};
 
   try {
