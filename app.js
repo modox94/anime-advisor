@@ -14,6 +14,8 @@ const recommendRouter = require("./src/routes/recommend.js");
 
 const app = express();
 
+console.log("process.env", process.env);
+
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 app.set("session cookie name", "sid");
