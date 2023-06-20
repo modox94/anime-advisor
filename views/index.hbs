@@ -7,11 +7,16 @@
 
   <div class="mb-3">
     <div id="recommend" class="d-flex justify-content-center flex-wrap"> </div>
-    <button id="searchByRec" class="btn btn-primary w-100">Search by recommend</button>
-  </div>
 
-  <div class="d-flex flex-wrap justify-content-center">
-    <div id="spinner" class="spinner-border text-success mb-3" role="status" style="display:none;"> </div>
-    <div id="result" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-0 w-100 shadow-sm"> </div>
+    <div class="btn-group mb-3 w-100" role="group" aria-label="Basic checkbox toggle button group">
+      <input id="hideSelectedToggle" type="checkbox" class="btn-check" autocomplete="off">
+      <label class="btn btn-outline-primary text-nowrap flex0" for="hideSelectedToggle">Hide selected</label>
+      <button id="searchByRec" class="btn btn-primary align-self-center flex-fill" type="button">Search by
+        recommend</button>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center">
+      <div id="spinner" class="spinner-border text-success mb-3" role="status" style="display:none;"> </div>
+      <div id="result" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-0 w-100 shadow-sm"> </div>
+    </div>
   </div>
-</div>

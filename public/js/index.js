@@ -1,3 +1,4 @@
+import get from "./lodash/get.js";
 import isFinite from "./lodash/isFinite.js";
 import isFunction from "./lodash/isFunction.js";
 import noop from "./lodash/noop.js";
@@ -66,6 +67,7 @@ function descriptionToogle(event) {
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
 const clearForm = document.getElementById("clearForm");
+const hideSelectedToggle = document.getElementById("hideSelectedToggle");
 const searchByRec = document.getElementById("searchByRec");
 
 const resultContainer = document.getElementById("result");
@@ -75,8 +77,17 @@ const spinner = document.getElementById("spinner");
 
 searchForm.addEventListener("submit", callbackSearch);
 clearForm.addEventListener("click", callbackClear);
+hideSelectedToggle.addEventListener("click", hideSelectedCallback);
 searchByRec.addEventListener("click", callbackSearchByRec);
 start();
+
+function hideSelectedCallback(event) {
+  console.log("hideSelectedCallback", event);
+  console.log("hideSelectedCallback", event?.target?.checked);
+
+  const checked = get(event, ["target", "checked"], false);
+  resultContainer.classList.toggle("hide-selected", checked);
+}
 
 async function callbackSearch(event) {
   event.preventDefault();
@@ -106,6 +117,7 @@ function callbackClear(event) {
 
 function callbackAdd(event) {
   const card = event.target.closest(".card");
+  const cardContainer = event.target.closest(".col");
 
   if (!localStorage.getItem(card.id)) {
     const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
@@ -119,11 +131,13 @@ function callbackAdd(event) {
     }
 
     if (titleData) {
+      cardContainer.classList.add("selected");
       event.target.classList.replace("btn-outline-secondary", "btn-success");
       localStorage.setItem(card.id, JSON.stringify(titleData));
       makeRecButton(titleData.id, titleData.title?.default);
     }
   } else {
+    cardContainer.classList.remove("selected");
     event.target.classList.replace("btn-success", "btn-outline-secondary");
     localStorage.removeItem(card.id);
     const currentButton = document.querySelector(`[data-id="${card.id}"]`); //TODO

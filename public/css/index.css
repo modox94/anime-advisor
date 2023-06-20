@@ -1,0 +1,7 @@
+.flex0 {
+  flex: 0 !important;
+}
+
+.hide-selected .selected {
+  display: none;
+}
