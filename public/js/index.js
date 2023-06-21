@@ -1,9 +1,15 @@
 import get from "./lodash/get.js";
 import isFinite from "./lodash/isFinite.js";
 import isFunction from "./lodash/isFunction.js";
+import isPlainObject from "./lodash/isPlainObject.js";
 import noop from "./lodash/noop.js";
 import remove from "./lodash/remove.js";
-import { SEARCH_RESULTS, getLocalStorgeData } from "./utils.js";
+import {
+  HIDE_SELECTED,
+  SEARCH_RESULTS,
+  SETTINGS,
+  getLocalStorgeData,
+} from "./utils.js";
 
 // eslint-disable-next-line no-undef
 const { Tooltip } = bootstrap;
@@ -68,6 +74,9 @@ const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
 const clearForm = document.getElementById("clearForm");
 const hideSelectedToggle = document.getElementById("hideSelectedToggle");
+const hideSelectedToggleInternal = document.getElementById(
+  "hideSelectedToggleInternal"
+);
 const searchByRec = document.getElementById("searchByRec");
 
 const resultContainer = document.getElementById("result");
@@ -78,15 +87,25 @@ const spinner = document.getElementById("spinner");
 searchForm.addEventListener("submit", callbackSearch);
 clearForm.addEventListener("click", callbackClear);
 hideSelectedToggle.addEventListener("click", hideSelectedCallback);
+hideSelectedToggleInternal.addEventListener("click", hideSelectedCallback);
 searchByRec.addEventListener("click", callbackSearchByRec);
 start();
 
 function hideSelectedCallback(event) {
-  console.log("hideSelectedCallback", event);
-  console.log("hideSelectedCallback", event?.target?.checked);
-
   const checked = get(event, ["target", "checked"], false);
+
   resultContainer.classList.toggle("hide-selected", checked);
+  hideSelectedToggle.checked = checked;
+  hideSelectedToggleInternal.checked = checked;
+
+  let oldSettings = localStorage.getItem(SETTINGS);
+  if (!isPlainObject(oldSettings)) {
+    oldSettings = {};
+  }
+  localStorage.setItem(
+    SETTINGS,
+    JSON.stringify({ ...oldSettings, [HIDE_SELECTED]: checked })
+  );
 }
 
 async function callbackSearch(event) {
@@ -170,13 +189,20 @@ function callbackRecButton(event) {
 }
 
 function start() {
-  const { arrayOfRecomends } = getLocalStorgeData();
+  // TODO
+  const { arrayOfRecomends, settings } = getLocalStorgeData();
 
   arrayOfRecomends?.forEach((card) => {
     if (card?.id && card?.title) {
       makeRecButton(card.id, card.title?.default);
     }
   });
+
+  const settingsHideSelected = get(settings, [HIDE_SELECTED], false);
+  if (settingsHideSelected) {
+    hideSelectedToggle.click();
+    // hideSelectedToggleInternal.checked = true
+  }
 }
 
 async function renderCards(cardsArray) {

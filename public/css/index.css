@@ -5,3 +5,7 @@
 .hide-selected .selected {
   display: none;
 }
+
+.cursor-pointer {
+  cursor: pointer;
+}
