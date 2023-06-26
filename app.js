@@ -3,7 +3,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const path = require("path");
 const hbs = require("hbs");
-const dbConnect = require("./dbConnect.js");
+const mongoConnect = require("./db/mongo.js");
 const userMiddleware = require("./src/middleware/user");
 const indexRouter = require("./src/routes/index.js");
 const signupRouter = require("./src/routes/signup.js");
@@ -24,7 +24,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-dbConnect().then((client) => {
+mongoConnect().then((client) => {
   app.use(
     session({
       name: app.get("session cookie name"),
@@ -32,9 +32,7 @@ dbConnect().then((client) => {
       store: MongoStore.create({ client }),
       resave: false,
       saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-      },
+      cookie: { secure: process.env.NODE_ENV === "production" },
     })
   );
 });
