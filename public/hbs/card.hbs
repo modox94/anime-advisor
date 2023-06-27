@@ -1,10 +1,10 @@
 {{#each cardsArray}}
 <div class="col{{#if this.alreadyAdd}} selected{{/if}}">
   <div id="{{this.id}}" class="card h-100 border-no-radius">
-    <img class="card-img-top poster-aspect-ratio" src="{{this.image.webp.default}}" alt="{{this.title.default}}">
+    <img class="card-img-top poster-aspect-ratio" src="{{this.image}}" alt="{{this.title}}">
     </img>
-    <div class="card-header text-truncate" data-bs-toggle="tooltip" data-bs-title="{{this.title.default}}">
-      {{this.title.default}}</div>
+    <div class="card-header text-truncate" data-bs-toggle="tooltip" data-bs-title="{{this.title}}">
+      {{this.title}}</div>
     <div class="card-body">
       {{#unless this.synopsis}}
       <button type="button" class="btn btn-sm btn-outline-secondary w-100 synopsis">Download description</button>

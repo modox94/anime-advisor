@@ -1,81 +1,97 @@
 const express = require("express");
 const Jikan = require("jikan4.js");
-const { pantsu } = require("nyaapi");
+// const { pantsu } = require("nyaapi");
 const { get, set } = require("lodash");
+const { REDIS_TYPES } = require("../constants");
+const {
+  getRedisKey,
+  recomposeFromRecommendations,
+  recomposeFromSearch,
+} = require("../utils");
+const { redisGet, redisSet } = require("../../db/redis");
 
 const client = new Jikan.Client();
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { arrayOfId } = req.body || {};
-  const objectOfTitles = {};
+  let { arrayOfId = [] } = req.body || {};
+  arrayOfId = arrayOfId.map((idEl) => Number(idEl));
+  const resultObj = {};
+
   for (const id of arrayOfId) {
-    const curRecArr = (await client.anime.getRecommendations(id)) || [];
+    let recomArray;
+    const redisKey = getRedisKey(REDIS_TYPES.RECOMMENDATIONS, { id });
+    const cachedData = await redisGet(redisKey);
+    if (cachedData) {
+      recomArray = cachedData;
+    } else {
+      recomArray = (await client.anime.getRecommendations(id)) || [];
+      redisSet(redisKey, recomArray);
+    }
 
-    for (const curRec of curRecArr) {
-      const curRecId = String(get(curRec, ["entry", "id"], ""));
-      const curRecImage = get(curRec, ["entry", "image", "default"], "");
-      const curRecTitle = get(curRec, ["entry", "title"], "");
-      const curRecUrl = get(curRec, ["entry", "url"], "");
-      const curRecVotes = get(curRec, ["votes"], "");
-      const recomCountPath = [curRecId, "recommendation_count"];
+    const recomposedArray = recomposeFromRecommendations(recomArray);
 
-      if (!objectOfTitles[curRecId]) {
-        set(objectOfTitles, [curRecId, "id"], curRecId);
-        set(
-          objectOfTitles,
-          [curRecId, "image", "webp", "default"],
-          curRecImage
-        );
-        set(objectOfTitles, [curRecId, "title", "default"], curRecTitle);
-        set(objectOfTitles, [curRecId, "url"], curRecUrl);
-        set(objectOfTitles, recomCountPath, curRecVotes);
+    for (const recomObj of recomposedArray) {
+      const { id: recomId, votes } = recomObj;
+
+      if (arrayOfId.includes(recomId)) {
+        continue;
       }
 
-      if (!arrayOfId.includes(curRecId)) {
-        const oldValue = get(objectOfTitles, recomCountPath, 0);
-        set(objectOfTitles, recomCountPath, oldValue + curRec.votes);
+      if (!resultObj[recomId]) {
+        resultObj[recomId] = recomObj;
+      } else {
+        const prevVotes = get(resultObj, [recomId, "votes"], 0);
+        set(resultObj, [recomId, "votes"], prevVotes + votes);
       }
     }
   }
 
-  const cardsArray = Object.values(objectOfTitles).sort(function (a, b) {
-    if (a.recommendation_count < b.recommendation_count) {
+  const result = Object.values(resultObj).sort(function (a, b) {
+    if (a.votes < b.votes) {
       return 1;
     }
-    if (a.recommendation_count > b.recommendation_count) {
+    if (a.votes > b.votes) {
       return -1;
     }
     return 0;
   });
 
-  res.json(JSON.stringify(cardsArray));
+  res.json(JSON.stringify(result));
 });
 
 router.post("/synopsis", async (req, res) => {
   const { id } = req.body || {};
 
-  const dataOfTitle = await client.anime.get(id);
-
-  let arrayOfTorrents = [];
-  // pantsu TODO
-  try {
-    arrayOfTorrents =
-      (await pantsu.search(dataOfTitle.title.toString(), 10, {
-        order: false,
-        sort: "4",
-        c: "3_5",
-        limit: 10,
-      })) || [];
-
-    arrayOfTorrents = arrayOfTorrents.map((torrent) => {
-      torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
-
-      return torrent;
-    });
-  } catch (error) {
-    if (error) console.log("id pantsu error", id, error.message);
+  let resultRaw;
+  const redisKey = getRedisKey(REDIS_TYPES.SEARCH_ITEM, { id });
+  const cachedData = await redisGet(redisKey);
+  if (cachedData) {
+    resultRaw = cachedData;
+  } else {
+    resultRaw = await client.anime.get(id);
+    redisSet(redisKey, resultRaw);
   }
+
+  // let arrayOfTorrents = [];
+  // // pantsu TODO
+  // try {
+  //   arrayOfTorrents =
+  //     (await pantsu.search(dataOfTitle.title.toString(), 10, {
+  //       order: false,
+  //       sort: "4",
+  //       c: "3_5",
+  //       limit: 10,
+  //     })) || [];
+
+  //   arrayOfTorrents = arrayOfTorrents.map((torrent) => {
+  //     torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
+
+  //     return torrent;
+  //   });
+  // } catch (error) {
+  //   if (error) console.log("id pantsu error", id, error.message);
+  // }
 
   // if (!arrayOfTorrents.length) {
   //   try {
@@ -95,7 +111,13 @@ router.post("/synopsis", async (req, res) => {
   // }
   // pantsu
 
-  res.json(JSON.stringify({ dataOfTitle, arrayOfTorrents }));
+  // res.json(JSON.stringify({ dataOfTitle, arrayOfTorrents }));
+  res.json(
+    JSON.stringify({
+      dataOfTitle: recomposeFromSearch(resultRaw),
+      arrayOfTorrents: [],
+    })
+  );
 });
 
 module.exports = router;

@@ -112,17 +112,20 @@ async function callbackSearch(event) {
   event.preventDefault();
   spinner.style.display = "block";
 
-  const response = await fetch("/search", {
-    method: "POST",
+  var url = new URL("/search", location.origin);
+  var params = { term: searchInput.value, offset: 0, maxCount: 20 };
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    method: "GET",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ term: searchInput.value }),
   });
   const cardsArray = JSON.parse(await response.json());
 
   await renderCards(cardsArray);
 
   spinner.style.display = "none";
-  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray));
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray)); // TODO
 }
 
 function callbackClear(event) {
@@ -153,7 +156,7 @@ function callbackAdd(event) {
       cardContainer.classList.add("selected");
       event.target.classList.replace("btn-outline-secondary", "btn-success");
       localStorage.setItem(card.id, JSON.stringify(titleData));
-      makeRecButton(titleData.id, titleData.title?.default);
+      makeRecButton(titleData.id, titleData.title);
     }
   } else {
     cardContainer.classList.remove("selected");
@@ -194,7 +197,7 @@ function start() {
 
   arrayOfRecomends?.forEach((card) => {
     if (card?.id && card?.title) {
-      makeRecButton(card.id, card.title?.default);
+      makeRecButton(card.id, card.title);
     }
   });
 
