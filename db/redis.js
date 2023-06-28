@@ -8,7 +8,9 @@ const defaultOptions = {
 
 console.log("process.env", process.env);
 
-const redisClient = createClient(process.env.REDIS_URL);
+const redisClient = createClient(
+  process.env.REDIS_URL ? { url: process.env.REDIS_URL } : undefined
+);
 
 let errorCounter = 0;
 redisClient.on("error", (err) => {
