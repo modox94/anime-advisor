@@ -6,7 +6,7 @@ const defaultOptions = {
   NX: true,
 };
 
-const redisClient = createClient();
+const redisClient = createClient(process.env.REDIS_URL);
 
 let errorCounter = 0;
 redisClient.on("error", (err) => {

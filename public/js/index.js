@@ -1,57 +1,21 @@
+import { renderHbs } from "./handlebarsUtil.js";
 import get from "./lodash/get.js";
-import isFinite from "./lodash/isFinite.js";
 import isFunction from "./lodash/isFunction.js";
 import isPlainObject from "./lodash/isPlainObject.js";
-import noop from "./lodash/noop.js";
 import remove from "./lodash/remove.js";
+import { tooltipsStore, turnOnTooltip } from "./tooltipUtil.js";
 import {
   HIDE_SELECTED,
+  MAX_COUNT,
+  MAX_REC_ITEMS,
   SEARCH_RESULTS,
+  SEARCH_TERM,
   SETTINGS,
+  addSpinner,
   getLocalStorgeData,
 } from "./utils.js";
 
-// eslint-disable-next-line no-undef
-const { Tooltip } = bootstrap;
-const tooltipsStore = [];
-// eslint-disable-next-line no-undef
-const { compile } = Handlebars;
-const templatesStore = {};
-
-const turnOnTooltip = (event) => {
-  const { target } = event;
-  const { scrollWidth, clientWidth } = target;
-
-  if (!target || !isFinite(scrollWidth) || !isFinite(clientWidth)) {
-    return;
-  }
-
-  const oldTooltip = Tooltip.getInstance(target);
-
-  if (scrollWidth > clientWidth) {
-    if (!oldTooltip) {
-      const newTooltip = Tooltip.getOrCreateInstance(target);
-      tooltipsStore.push(newTooltip);
-    }
-  } else if (oldTooltip) {
-    remove(tooltipsStore, (tooltipItem) => tooltipItem === oldTooltip);
-    oldTooltip.dispose();
-  }
-};
-
-async function renderHbs(data, url) {
-  let templateFn = noop;
-  if (templatesStore[url] && isFunction(templatesStore[url])) {
-    templateFn = templatesStore[url];
-  } else {
-    const templateRaw = await fetch(url);
-    const template = await templateRaw.text();
-    templateFn = compile(template);
-    templatesStore[url] = templateFn;
-  }
-
-  return templateFn(data);
-}
+const parser = new DOMParser();
 
 function descriptionToogle(event) {
   if (!event || !event.target) {
@@ -63,35 +27,40 @@ function descriptionToogle(event) {
     return;
   }
 
-  const cardText = card.querySelector(".card-text") || {};
+  const synopsisEl = card.querySelector(".synopsis-value") || {};
 
-  if ((cardText.innerText || "").trim()) {
-    cardText.classList.toggle("line-сlamp");
+  if ((synopsisEl.innerText || "").trim()) {
+    synopsisEl.classList.toggle("line-сlamp");
   }
 }
 
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
 const clearForm = document.getElementById("clearForm");
 const hideSelectedToggle = document.getElementById("hideSelectedToggle");
 const hideSelectedToggleInternal = document.getElementById(
   "hideSelectedToggleInternal"
 );
 const searchByRec = document.getElementById("searchByRec");
-
-const resultContainer = document.getElementById("result");
 const recommendContainer = document.getElementById("recommend");
-
+const resultContainer = document.getElementById("result");
 const spinner = document.getElementById("spinner");
+const loadMoreBtn = document.getElementById("loadMore");
+const errorTooManySelectedBtn = document.getElementById(
+  "errorTooManySelectedBtn"
+);
 
-searchForm.addEventListener("submit", callbackSearch);
-clearForm.addEventListener("click", callbackClear);
-hideSelectedToggle.addEventListener("click", hideSelectedCallback);
-hideSelectedToggleInternal.addEventListener("click", hideSelectedCallback);
-searchByRec.addEventListener("click", callbackSearchByRec);
+searchForm.addEventListener("submit", searchCb);
+clearForm.addEventListener("click", clearCb);
+hideSelectedToggle.addEventListener("click", hideSelectedCb);
+hideSelectedToggleInternal.addEventListener("click", hideSelectedCb);
+searchByRec.addEventListener("click", searchByRecCb);
+loadMoreBtn.addEventListener("click", loadMoreCb);
+
 start();
 
-function hideSelectedCallback(event) {
+function hideSelectedCb(event) {
   const checked = get(event, ["target", "checked"], false);
 
   resultContainer.classList.toggle("hide-selected", checked);
@@ -108,12 +77,17 @@ function hideSelectedCallback(event) {
   );
 }
 
-async function callbackSearch(event) {
+async function searchCb(event) {
   event.preventDefault();
-  spinner.style.display = "block";
+  const term = (searchInput.value || "").trim();
+  if (!term) {
+    return;
+  }
 
-  var url = new URL("/search", location.origin);
-  var params = { term: searchInput.value, offset: 0, maxCount: 20 };
+  const loadingOff = loadingOn();
+
+  const url = new URL("/search", location.origin);
+  const params = { term, offset: 0, maxCount: MAX_COUNT };
   url.search = new URLSearchParams(params).toString();
 
   const response = await fetch(url, {
@@ -124,24 +98,80 @@ async function callbackSearch(event) {
 
   await renderCards(cardsArray);
 
-  spinner.style.display = "none";
-  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray)); // TODO
+  loadingOff();
+
+  localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray));
+  localStorage.setItem(SEARCH_TERM, JSON.stringify(term));
+
+  if (cardsArray.length % MAX_COUNT === 0) {
+    loadMoreBtn.style.display = "";
+  }
 }
 
-function callbackClear(event) {
+async function loadMoreCb() {
+  const offset = resultContainer.childElementCount;
+  let term;
+  try {
+    term = JSON.parse(localStorage.getItem(SEARCH_TERM));
+  } catch (error) {
+    console.log("Invalid localStorage item");
+  }
+
+  if (!term || offset % MAX_COUNT !== 0) {
+    loadMoreBtn.style.display = "none";
+    return;
+  }
+
+  const loadingOff = loadingOn();
+
+  const url = new URL("/search", location.origin);
+  const params = { term: searchInput.value, offset, maxCount: MAX_COUNT };
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  const cardsArray = JSON.parse(await response.json());
+
+  const oldSearchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
+  localStorage.setItem(
+    SEARCH_RESULTS,
+    JSON.stringify([...oldSearchResults, ...cardsArray])
+  );
+
+  await renderCards(cardsArray, true);
+
+  loadingOff();
+
+  if (cardsArray.length % MAX_COUNT !== 0) {
+    loadMoreBtn.style.display = "none";
+  }
+}
+
+function clearCb(event) {
   event.preventDefault();
   renderCards([]);
 
   searchForm.reset();
   localStorage.clear();
-  recommendContainer.innerHTML = ""; // TODO
+
+  recommendContainer
+    .querySelectorAll(".btn.btn-danger")
+    .forEach((btn) => btn.removeEventListener("click", recommendBtnCb));
+  recommendContainer.innerHTML = "";
 }
 
-function callbackAdd(event) {
+function addCb(event) {
   const card = event.target.closest(".card");
   const cardContainer = event.target.closest(".col");
 
   if (!localStorage.getItem(card.id)) {
+    if (recommendContainer.childElementCount >= MAX_REC_ITEMS) {
+      errorTooManySelectedBtn.click();
+      return;
+    }
+
     const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
 
     let titleData;
@@ -156,59 +186,87 @@ function callbackAdd(event) {
       cardContainer.classList.add("selected");
       event.target.classList.replace("btn-outline-secondary", "btn-success");
       localStorage.setItem(card.id, JSON.stringify(titleData));
-      makeRecButton(titleData.id, titleData.title);
+      createRecButton(titleData.id, titleData.title);
     }
   } else {
     cardContainer.classList.remove("selected");
     event.target.classList.replace("btn-success", "btn-outline-secondary");
     localStorage.removeItem(card.id);
-    const currentButton = document.querySelector(`[data-id="${card.id}"]`); //TODO
+    const currentButton = document.querySelector(`[data-id="${card.id}"]`);
     if (currentButton) {
-      currentButton.removeEventListener("click", callbackRecButton);
-      currentButton.remove();
+      currentButton.removeEventListener("click", recommendBtnCb);
+      currentButton.closest(".btn-group")?.remove();
     }
   }
 }
 
-function makeRecButton(id, title) {
-  const currentButton = document.createElement("button");
-  currentButton.dataset.id = id;
-  currentButton.classList.add("btn", "btn-warning", "m-1");
-  currentButton.innerText = title;
-  currentButton.addEventListener("click", callbackRecButton);
-  recommendContainer.appendChild(currentButton);
+function createRecButton(id, title) {
+  const buttonGroup = document.createElement("div");
+  buttonGroup.classList.add("btn-group", "m-1");
+  buttonGroup.role = "group";
+
+  const buttonDelete = document.createElement("button");
+  buttonDelete.dataset.id = id;
+  buttonDelete.classList.add("btn", "btn-danger");
+  buttonDelete.innerText = "X";
+  buttonDelete.addEventListener("click", recommendBtnCb);
+
+  const buttonTitle = document.createElement("button");
+  buttonTitle.disabled = true;
+  buttonTitle.classList.add("btn", "btn-outline-dark");
+  buttonTitle.innerText = title;
+
+  buttonGroup.appendChild(buttonTitle);
+  buttonGroup.appendChild(buttonDelete);
+  recommendContainer.appendChild(buttonGroup);
 }
 
-function callbackRecButton(event) {
-  event.target.removeEventListener("click", callbackRecButton);
+function recommendBtnCb(event) {
+  event.target.removeEventListener("click", recommendBtnCb);
   localStorage.removeItem(event.target.dataset.id);
-  event.target.remove();
-  const currentCard = document.getElementById(event.target.dataset.id);
-  if (currentCard) {
-    currentCard
+  event.target.closest(".btn-group")?.remove();
+  const card = document.getElementById(event.target.dataset.id);
+  if (card) {
+    const cardContainer = card.closest(".col");
+    cardContainer.classList.remove("selected");
+    card
       .querySelector(".add")
       .classList.replace("btn-success", "btn-outline-secondary");
   }
 }
 
 function start() {
-  // TODO
-  const { arrayOfRecomends, settings } = getLocalStorgeData();
+  const {
+    arrayOfRecomends,
+    settings,
+    [SEARCH_RESULTS]: searchResults,
+    [SEARCH_TERM]: searchTerm,
+  } = getLocalStorgeData();
 
   arrayOfRecomends?.forEach((card) => {
     if (card?.id && card?.title) {
-      makeRecButton(card.id, card.title);
+      createRecButton(card.id, card.title);
     }
   });
+
+  if (searchResults.length > 0) {
+    renderCards(searchResults);
+  }
+
+  if (searchTerm) {
+    searchInput.value = searchTerm;
+    if (searchResults.length % MAX_COUNT === 0) {
+      loadMoreBtn.style.display = "";
+    }
+  }
 
   const settingsHideSelected = get(settings, [HIDE_SELECTED], false);
   if (settingsHideSelected) {
     hideSelectedToggle.click();
-    // hideSelectedToggleInternal.checked = true
   }
 }
 
-async function renderCards(cardsArray) {
+async function renderCards(cardsArray, addingMode) {
   if (!cardsArray) {
     return;
   }
@@ -224,14 +282,12 @@ async function renderCards(cardsArray) {
 
   resultContainer
     .querySelectorAll(".add")
-    .forEach((addButton) =>
-      addButton.removeEventListener("click", callbackAdd)
-    );
+    .forEach((addButton) => addButton.removeEventListener("click", addCb));
 
   resultContainer
     .querySelectorAll(".synopsis")
     .forEach((synopsisButton) =>
-      synopsisButton.removeEventListener("click", callbackSynopsis)
+      synopsisButton.removeEventListener("click", synopsisCb)
     );
 
   resultContainer
@@ -252,16 +308,22 @@ async function renderCards(cardsArray) {
     }
   }
   const renderedResult = await renderHbs({ cardsArray }, "/hbs/card.hbs");
-  resultContainer.innerHTML = renderedResult;
+  if (addingMode) {
+    const parsedHtml = parser.parseFromString(renderedResult, "text/html");
+    const body = parsedHtml.querySelector("body");
+    resultContainer.append(...body.childNodes);
+  } else {
+    resultContainer.innerHTML = renderedResult;
+  }
 
   resultContainer
     .querySelectorAll(".add")
-    .forEach((addButton) => addButton.addEventListener("click", callbackAdd));
+    .forEach((addButton) => addButton.addEventListener("click", addCb));
 
   resultContainer
     .querySelectorAll(".synopsis")
     .forEach((synopsisButton) =>
-      synopsisButton.addEventListener("click", callbackSynopsis)
+      synopsisButton.addEventListener("click", synopsisCb)
     );
 
   resultContainer
@@ -277,38 +339,53 @@ async function renderCards(cardsArray) {
     );
 }
 
-async function callbackSearchByRec() {
+function loadingOn() {
+  const removeSpinner = addSpinner([
+    searchInput,
+    searchBtn,
+    clearForm,
+    searchByRec,
+    loadMoreBtn,
+  ]);
+
   spinner.style.display = "block";
 
-  const { arrayOfId, arrayOfRecomends } = getLocalStorgeData();
-
-  if (!arrayOfId?.length || !arrayOfRecomends?.length) {
+  return () => {
     spinner.style.display = "none";
+    removeSpinner.forEach((cb) => cb());
+  };
+}
+
+async function searchByRecCb() {
+  const { arrayOfId } = getLocalStorgeData();
+
+  if (!arrayOfId?.length) {
     return;
   }
+
+  const loadingOff = loadingOn();
 
   const response = await fetch("/recommend", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ arrayOfId, arrayOfRecomends }),
+    body: JSON.stringify({ arrayOfId }),
   });
   const cardsArray = JSON.parse(await response.json());
 
   await renderCards(cardsArray);
 
-  spinner.style.display = "none";
+  loadingOff();
+
   localStorage.setItem(SEARCH_RESULTS, JSON.stringify(cardsArray));
+  localStorage.removeItem(SEARCH_TERM);
 }
 
-async function callbackSynopsis(event) {
+async function synopsisCb(event) {
   const button = event.target;
-  button.removeEventListener("click", callbackSynopsis);
-
-  button.innerHTML =
-    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="visually-hidden">Loading...</span>';
-  button.disabled = true;
-
+  button.removeEventListener("click", synopsisCb);
   const card = button.closest(".card");
+
+  const removeSpinner = addSpinner(button);
 
   const response = await fetch("/recommend/synopsis", {
     method: "POST",
@@ -316,31 +393,19 @@ async function callbackSynopsis(event) {
     body: JSON.stringify({ id: card.id }),
   });
 
-  const { dataOfTitle, arrayOfTorrents } = JSON.parse(await response.json());
+  const { synopsis, score, episodes, duration } =
+    JSON.parse(await response.json()) || {};
 
-  let magnetHtml = "";
-  if (arrayOfTorrents?.length) {
-    for (const torrent of arrayOfTorrents) {
-      magnetHtml += "\n<br>";
-      magnetHtml += `<a href="${torrent.magnet}">☠ ${torrent.name} [${torrent.filesizeGb} Gb]</a>`;
-    }
-  }
-  if (magnetHtml) {
-    magnetHtml += `\n<br>\n<a href="https://nyaa.net/search?c=3_5&q=${dataOfTitle.title}">☠ Search more torrents... ☠</a>`;
-  }
+  const synopsisEl = card.querySelector(".synopsis-value") || {};
+  const scoreEl = card.querySelector(".score-value") || {};
+  const durationEl = card.querySelector(".duration-value") || {};
 
-  const cardText = card.querySelector(".card-text") || {};
-  cardText.innerHTML = dataOfTitle.synopsis + magnetHtml;
+  synopsisEl.innerText = synopsis;
+  scoreEl.innerText = score;
+  durationEl.innerText = `${episodes} ep. x ${duration} min.`;
 
   descriptionToogle(event);
 
-  button.remove();
+  removeSpinner();
+  button?.remove();
 }
-
-/*
-после отрисовки результатов поиска мы добавляем кнопку искать рекоменлации после всех тайтов
-желательно вывод тайтлов уменьшить до 10 или около того
-
-после нажажатия на поиск рекомендация у нас стирается результат поиска,
-создается новая группа тайтлов поиск по рекомендациям, индексы для которых мы будем хранить в локалсторадж
-*/

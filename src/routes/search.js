@@ -19,7 +19,10 @@ const router = express.Router();
 // orderBy
 
 router.get("/", async (req, res) => {
-  const { term, offset = 0, maxCount = 20 } = req.query || {};
+  let { term = "", offset = 0, maxCount = 20 } = req.query || {};
+  term = term.trim();
+  offset = Number(offset);
+  maxCount = Number(maxCount);
   const filter = {};
   let result = [];
 
@@ -33,12 +36,7 @@ router.get("/", async (req, res) => {
     result = cachedData;
   } else {
     const cardsArray =
-      (await client.anime.search(
-        term,
-        filter,
-        Number(offset),
-        Number(maxCount)
-      )) || [];
+      (await client.anime.search(term, filter, offset, maxCount)) || [];
 
     redisSet(redisKey, cardsArray);
     cardsArray.forEach((cardItem) => {

@@ -1,4 +1,4 @@
-const { isArray, get, isObjectLike } = require("lodash");
+const { isArray, get, isObjectLike, round } = require("lodash");
 const { REDIS_TYPES, NO_DATA } = require("./constants");
 
 exports.getRedisKey = (type, body = {}) => {
@@ -45,11 +45,12 @@ const recomposeFromSearch = (data) => {
       get(data, ["image", "jpg", "default"], "");
     const title = get(data, ["title", "default"], "");
     const score = get(data, ["score"], 0);
-    const synopsis = get(data, ["synopsis"], NO_DATA);
-    const duration = get(data, ["duration"], 0);
+    const synopsis = get(data, ["synopsis"]) || NO_DATA;
+    const duration = round(get(data, ["duration"], 0) / 60000);
+    const episodes = get(data, ["episodes"], 0);
     const year = get(data, ["year"], 0);
 
-    return { id, url, image, title, score, synopsis, duration, year };
+    return { id, url, image, title, score, synopsis, duration, episodes, year };
   }
 };
 

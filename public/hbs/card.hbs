@@ -1,15 +1,31 @@
 {{#each cardsArray}}
 <div class="col{{#if this.alreadyAdd}} selected{{/if}}">
   <div id="{{this.id}}" class="card h-100 border-no-radius">
-    <img class="card-img-top poster-aspect-ratio" src="{{this.image}}" alt="{{this.title}}">
-    </img>
+    <img class="card-img-top poster-aspect-ratio" src="{{this.image}}" alt="{{this.title}}"> </img>
     <div class="card-header text-truncate" data-bs-toggle="tooltip" data-bs-title="{{this.title}}">
-      {{this.title}}</div>
+      {{this.title}}
+    </div>
+    <table class="table table-sm align-middle mb-0">
+      <tbody>
+        <tr>
+          <th class="text-start" scope="row">Score</th>
+          <td class="text-end score-value">{{this.score}}</td>
+        </tr>
+
+        <tr>
+          <th class="text-start" scope="row">Duration</th>
+          <td class="text-end duration-value"> {{#if this.episodes}} {{this.episodes}} ep. x {{/if}}{{#if
+            this.duration}}{{this.duration}} min.{{/if}}</td>
+        </tr>
+      </tbody>
+    </table>
     <div class="card-body">
-      {{#unless this.synopsis}}
+      {{#unless this.synopsis }}
       <button type="button" class="btn btn-sm btn-outline-secondary w-100 synopsis">Download description</button>
       {{/unless}}
-      <p class="card-text line-сlamp cursor-pointer">{{this.synopsis}}</p>
+      <p class="card-text line-сlamp cursor-pointer synopsis-value">
+        {{#if (isReadable this.synopsis) }}{{this.synopsis}}{{/if}}
+      </p>
     </div>
     <div class="card-footer">
       <div class="btn-group w-100">

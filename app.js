@@ -32,7 +32,10 @@ mongoConnect().then((client) => {
       store: MongoStore.create({ client }),
       resave: false,
       saveUninitialized: false,
-      cookie: { secure: process.env.NODE_ENV === "production" },
+      cookie: {
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      },
     })
   );
 });

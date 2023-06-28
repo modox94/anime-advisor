@@ -1,7 +1,7 @@
 <div class="container">
   <form id="searchForm" class="input-group mb-3">
     <input id="searchInput" type="text" class="form-control" placeholder="Type to search..." autocomplete="off">
-    <button type="submit" class="btn btn-primary">Search</button>
+    <button id="searchBtn" type="submit" class="btn btn-primary">Search</button>
     <button id="clearForm" class="btn btn-danger">Clear</button>
   </form>
 
@@ -24,22 +24,38 @@
 
     <div class="d-flex flex-wrap justify-content-center">
       <div id="spinner" class="spinner-border text-success mb-3" role="status" style="display:none;"> </div>
-      <div id="result" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-0 w-100 shadow-sm">
+
+      <div id="result" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-0 w-100"> </div>
+
+      <button id="loadMore" class="btn btn-primary mt-3 w-100" type="button" style="display: none;">
+        Load more
+      </button>
+    </div>
 
 
-        {{!-- <nav aria-label="Page navigation example" class="w-100">
-          <ul class="pagination justify-content-center">
-            <li class="page-item disabled">
-              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-            </li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-              <a class="page-link" href="#">Next</a>
-            </li>
-          </ul>
-        </nav> --}}
+    <!-- Button trigger modal -->
+    <button id="errorTooManySelectedBtn" type="button" data-bs-toggle="modal" data-bs-target="#errorTooManySelected"
+      style="display: none;">
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="errorTooManySelected" tabindex="-1" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Error</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            You have already added the maximum number of items to search. Remove one of the items to add this one.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Ok</button>
+          </div>
+        </div>
       </div>
     </div>
+
+
   </div>

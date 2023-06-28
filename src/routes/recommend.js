@@ -1,7 +1,6 @@
 const express = require("express");
 const Jikan = require("jikan4.js");
-// const { pantsu } = require("nyaapi");
-const { get, set } = require("lodash");
+const { get, set, merge } = require("lodash");
 const { REDIS_TYPES } = require("../constants");
 const {
   getRedisKey,
@@ -15,7 +14,7 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   let { arrayOfId = [] } = req.body || {};
-  arrayOfId = arrayOfId.map((idEl) => Number(idEl));
+  arrayOfId = arrayOfId.map((idEl) => Number(idEl)).slice(0, 10);
   const resultObj = {};
 
   for (const id of arrayOfId) {
@@ -40,6 +39,11 @@ router.post("/", async (req, res) => {
 
       if (!resultObj[recomId]) {
         resultObj[recomId] = recomObj;
+        const redisKey = getRedisKey(REDIS_TYPES.SEARCH_ITEM, { id: recomId });
+        const cachedData = await redisGet(redisKey);
+        if (cachedData) {
+          merge(resultObj[recomId], recomposeFromSearch(cachedData));
+        }
       } else {
         const prevVotes = get(resultObj, [recomId, "votes"], 0);
         set(resultObj, [recomId, "votes"], prevVotes + votes);
@@ -73,51 +77,7 @@ router.post("/synopsis", async (req, res) => {
     redisSet(redisKey, resultRaw);
   }
 
-  // let arrayOfTorrents = [];
-  // // pantsu TODO
-  // try {
-  //   arrayOfTorrents =
-  //     (await pantsu.search(dataOfTitle.title.toString(), 10, {
-  //       order: false,
-  //       sort: "4",
-  //       c: "3_5",
-  //       limit: 10,
-  //     })) || [];
-
-  //   arrayOfTorrents = arrayOfTorrents.map((torrent) => {
-  //     torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
-
-  //     return torrent;
-  //   });
-  // } catch (error) {
-  //   if (error) console.log("id pantsu error", id, error.message);
-  // }
-
-  // if (!arrayOfTorrents.length) {
-  //   try {
-  //     arrayOfTorrents = await si.search(dataOfTitle.title, 10, {
-  //       order: false,
-  //       category: '3_5',
-  //     });
-
-  //     arrayOfTorrents = arrayOfTorrents.map((torrent) => {
-  //       torrent.filesizeGb = (torrent.filesize / 1073741824).toFixed(2);
-
-  //       return torrent;
-  //     });
-  //   } catch (error) {
-  //     if (error) console.log('id si error', id, error.message);
-  //   }
-  // }
-  // pantsu
-
-  // res.json(JSON.stringify({ dataOfTitle, arrayOfTorrents }));
-  res.json(
-    JSON.stringify({
-      dataOfTitle: recomposeFromSearch(resultRaw),
-      arrayOfTorrents: [],
-    })
-  );
+  res.json(JSON.stringify(recomposeFromSearch(resultRaw)));
 });
 
 module.exports = router;
