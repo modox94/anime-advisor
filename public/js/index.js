@@ -172,7 +172,8 @@ function addCb(event) {
       return;
     }
 
-    const searchResults = JSON.parse(localStorage.getItem(SEARCH_RESULTS));
+    const searchResults =
+      JSON.parse(localStorage.getItem(SEARCH_RESULTS)) || [];
 
     let titleData;
     for (const title of searchResults) {
@@ -249,13 +250,13 @@ function start() {
     }
   });
 
-  if (searchResults.length > 0) {
+  if (searchResults?.length > 0) {
     renderCards(searchResults);
   }
 
   if (searchTerm) {
     searchInput.value = searchTerm;
-    if (searchResults.length % MAX_COUNT === 0) {
+    if (searchResults?.length % MAX_COUNT === 0) {
       loadMoreBtn.style.display = "";
     }
   }
