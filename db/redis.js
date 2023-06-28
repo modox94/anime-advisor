@@ -25,6 +25,10 @@ redisClient.on("error", (err) => {
   }
 });
 
+redisClient.on("ready", () => {
+  console.log("Redis is ready to use");
+});
+
 redisClient.connect();
 
 const redisGet = async (keyRaw) => {
