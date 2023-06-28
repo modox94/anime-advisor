@@ -6,8 +6,6 @@ const defaultOptions = {
   NX: true,
 };
 
-console.log("process.env", process.env);
-
 const redisClient = createClient(
   process.env.REDIS_URL ? { url: process.env.REDIS_URL } : undefined
 );
